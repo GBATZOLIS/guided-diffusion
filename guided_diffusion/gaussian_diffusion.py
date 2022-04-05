@@ -781,8 +781,8 @@ class GaussianDiffusion:
             indices = tqdm(indices)
 
         print(self.timestep_map)
-        assert self.rescale_timesteps==False, 'rescale_timesteps must be set to False.'
-        
+        assert self.rescale_timesteps == False, 'rescale_timesteps must be set to False.'
+
         ode_f = get_f_fn(model, cond_fn, clip_denoised, denoised_fn, model_kwargs)
         with th.no_grad():
             for i in indices: #999,998, ..., 2, 1 - skip 0
@@ -796,8 +796,8 @@ class GaussianDiffusion:
                 sde_t = th.tensor([sde_t] * shape[0], device=device) #actual diffusing time
                 #sde_t_next = th.tensor([sde_t_next] * shape[0], device=device)
                 
-                t = th.tensor([self.timestep_map[i]] * shape[0], device=device) #index
-                t_next = th.tensor([self.timestep_map[i-1]] * shape[0], device=device)
+                t = th.tensor([self.timestep_map[i]] * shape[0], device=device).float() #index
+                t_next = th.tensor([self.timestep_map[i-1]] * shape[0], device=device).float()
 
                 #evaluate
                 f_0 = ode_f(x, sde_t, t)
