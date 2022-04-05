@@ -95,7 +95,7 @@ def main():
         #logger.log(f"created {len(all_images) * args.batch_size} samples")
         print(f"created {len(all_images) * args.batch_size} samples")
 
-    arr = np.concatenate(all_images, axis=0)
+    arr = np.stack(all_images)
     print(arr.shape)
 
     arr = arr[: args.num_samples]
