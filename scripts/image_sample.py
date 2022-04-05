@@ -10,7 +10,7 @@ import numpy as np
 import torch as th
 import torch.distributed as dist
 
-from guided_diffusion import dist_util, logger
+from guided_diffusion import logger
 from guided_diffusion.script_util import (
     NUM_CLASSES,
     model_and_diffusion_defaults,
@@ -23,19 +23,23 @@ from guided_diffusion.script_util import (
 def main():
     args = create_argparser().parse_args()
 
-    dist_util.setup_dist()
+    #dist_util.setup_dist()
     logger.configure()
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, list(model_and_diffusion_defaults().keys()).append('index2time_dir'))
     )
-    model.load_state_dict(
-        dist_util.load_state_dict(args.model_path, map_location="cpu")
-    )
-    model.to(dist_util.dev())
+    #model.load_state_dict(
+    #    dist_util.load_state_dict(args.model_path, map_location="cpu")
+    #)
+    device = 'cuda'
+    model.load_state_dict(torch.load(args.model_path))
+    model.to(device)
+
     if args.use_fp16:
         model.convert_to_fp16()
+
     model.eval()
 
     logger.log("sampling...")
@@ -45,7 +49,7 @@ def main():
         model_kwargs = {}
         if args.class_cond:
             classes = th.randint(
-                low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
+                low=0, high=NUM_CLASSES, size=(args.batch_size,), device=device
             )
             model_kwargs["y"] = classes
         sample_fn = (
