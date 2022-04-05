@@ -37,7 +37,7 @@ def main():
     #    dist_util.load_state_dict(args.model_path, map_location="cpu")
     #)
     device = 'cuda'
-    model.load_state_dict(torch.load(args.model_path))
+    model.load_state_dict(th.load(args.model_path))
     model.to(device)
 
     if args.use_fp16:
