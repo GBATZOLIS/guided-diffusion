@@ -745,7 +745,7 @@ class GaussianDiffusion:
                 eps = self._predict_eps_from_xstart(x, t, out["pred_xstart"])
 
                 alpha_t = th.exp(-1/4 * sde_t ** 2 *(bmax-bmin) - 1/2 * sde_t * bmin)
-                sigma_t = torch.sqrt(1 - alpha_t**2)
+                sigma_t = th.sqrt(1 - alpha_t**2)
 
                 score_t = -eps/_broadcoast_to_shape(sigma_t, eps.shape) 
                 sde_f = -1/2 * _broadcoast_to_shape(bmin+sde_t*(bmax-bmin), x.shape) * x
@@ -784,6 +784,7 @@ class GaussianDiffusion:
         with th.no_grad():
             for i in indices: #999,998, ..., 2, 1 - skip 0
                 #convert index to diffusion time based on the VP SDE provided by Song.
+                self._scale_timesteps(t)
                 sde_t = self.index2time[i]
                 print(sde_t, i)
 
