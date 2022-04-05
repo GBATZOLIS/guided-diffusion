@@ -742,9 +742,12 @@ class GaussianDiffusion:
                 if cond_fn is not None:
                     out = self.condition_score(cond_fn, out, x, t_index, model_kwargs=model_kwargs)
 
+                eps = self._predict_eps_from_xstart(x, t, out["pred_xstart"])
+
                 alpha_t = th.exp(-1/4 * sde_t ** 2 *(bmax-bmin) - 1/2 * sde_t * bmin)
-                sigma_t_square = 1 - alpha_t**2
-                score_t = _broadcoast_to_shape(alpha_t/sigma_t_square, x.shape) * out["pred_xstart"] - _broadcoast_to_shape(1/sigma_t_square, x.shape) * x
+                sigma_t = torch.sqrt(1 - alpha_t**2)
+
+                score_t = -eps/_broadcoast_to_shape(sigma_t, eps.shape) 
                 sde_f = -1/2 * _broadcoast_to_shape(bmin+sde_t*(bmax-bmin), x.shape) * x
                 sde_g_square = bmin+sde_t*(bmax-bmin)
                 out = sde_f - 1/2 * _broadcoast_to_shape(sde_g_square, score_t.shape) * score_t
@@ -782,12 +785,14 @@ class GaussianDiffusion:
             for i in indices: #999,998, ..., 2, 1 - skip 0
                 #convert index to diffusion time based on the VP SDE provided by Song.
                 sde_t = self.index2time[i]
+                print(sde_t, i)
+
                 sde_t_next = self.index2time[i-1]
                 h = sde_t_next - sde_t
 
                 sde_t = th.tensor([sde_t] * shape[0], device=device) #actual diffusing time
-                sde_t_next = th.tensor([sde_t_next] * shape[0], device=device)
-
+                #sde_t_next = th.tensor([sde_t_next] * shape[0], device=device)
+                
                 t = th.tensor([i] * shape[0], device=device) #index
                 t_next = th.tensor([i-1] * shape[0], device=device)
 
