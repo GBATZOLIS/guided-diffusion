@@ -95,13 +95,17 @@ def main():
         #logger.log(f"created {len(all_images) * args.batch_size} samples")
         print(f"created {len(all_images) * args.batch_size} samples")
 
-    arr = np.concatenate(all_images, axis=0)
+    print(all_images.shape)
     
+    arr = np.concatenate(all_images, axis=0)
+    print(arr.shape)
+
     arr = arr[: args.num_samples]
+    print(arr.shape)
+
     if args.class_cond:
         label_arr = np.concatenate(all_labels, axis=0)
         label_arr = label_arr[: args.num_samples]
-    #if dist.get_rank() == 0:
 
     Path(args.write_dir).mkdir(parents=True, exist_ok=True)
 
@@ -109,8 +113,8 @@ def main():
     out_path = os.path.join(args.write_dir, f"samples_{shape_str}.npz")
     #logger.log(f"saving to {out_path}")
     print(f"saving to {out_path}")
-    print(arr.shape)
     
+
     if args.class_cond:
         np.savez(out_path, arr, label_arr)
     else:
