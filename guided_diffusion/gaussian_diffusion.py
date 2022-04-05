@@ -780,12 +780,13 @@ class GaussianDiffusion:
             from tqdm.auto import tqdm
             indices = tqdm(indices)
 
+        print(self.timestep_map)
         ode_f = get_f_fn(model, cond_fn, clip_denoised, denoised_fn, model_kwargs)
         with th.no_grad():
             for i in indices: #999,998, ..., 2, 1 - skip 0
                 #convert index to diffusion time based on the VP SDE provided by Song.
                 sde_t = self.index2time[i]
-                print(sde_t, i)
+                #print(sde_t, i)
 
                 sde_t_next = self.index2time[i-1]
                 h = sde_t_next - sde_t
