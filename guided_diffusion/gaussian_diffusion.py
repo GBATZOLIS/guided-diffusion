@@ -784,7 +784,6 @@ class GaussianDiffusion:
         with th.no_grad():
             for i in indices: #999,998, ..., 2, 1 - skip 0
                 #convert index to diffusion time based on the VP SDE provided by Song.
-                self._scale_timesteps(t)
                 sde_t = self.index2time[i]
                 print(sde_t, i)
 
