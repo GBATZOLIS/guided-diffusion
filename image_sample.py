@@ -9,6 +9,7 @@ import os
 import numpy as np
 import torch as th
 import torch.distributed as dist
+from pathlib import Path
 
 from guided_diffusion import logger
 from guided_diffusion.script_util import (
@@ -19,17 +20,24 @@ from guided_diffusion.script_util import (
     args_to_dict,
 )
 
+def get_sampling_fn(diffusion, sampling_method):
+    if sampling_method=='ddim':
+        return diffusion.ddim_sample_loop
+    elif sampling_method=='pc-ode':
+        return diffusion.pc_sample_loop
+    else:
+        return diffusion.p_sample_loop
 
 def main():
     args = create_argparser().parse_args()
     print(args.index2time_dir)
 
     #dist_util.setup_dist()
-    logger.configure()
+    #logger.configure()
 
-    logger.log("creating model and diffusion...")
+    #logger.log("creating model and diffusion...")
+    print("creating model and diffusion...")
 
-    print(model_and_diffusion_defaults().keys())
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
@@ -45,7 +53,9 @@ def main():
 
     model.eval()
 
-    logger.log("sampling...")
+    #logger.log("sampling...")
+    print("sampling...")
+
     all_images = []
     all_labels = []
     while len(all_images) * args.batch_size < args.num_samples:
@@ -55,15 +65,16 @@ def main():
                 low=0, high=NUM_CLASSES, size=(args.batch_size,), device=device
             )
             model_kwargs["y"] = classes
-        sample_fn = (
-            diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
-        )
+
+        sample_fn = get_sampling_fn(diffusion, args.sampling_method)
+        
         sample = sample_fn(
             model,
             (args.batch_size, 3, args.image_size, args.image_size),
             clip_denoised=args.clip_denoised,
-            model_kwargs=model_kwargs,
-        )
+            model_kwargs=model_kwargs, progress=True
+            )
+
         sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
         sample = sample.permute(0, 2, 3, 1)
         sample = sample.contiguous()
@@ -80,7 +91,8 @@ def main():
             dist.all_gather(gathered_labels, classes)
             all_labels.extend([labels.cpu().numpy() for labels in gathered_labels])
 
-        logger.log(f"created {len(all_images) * args.batch_size} samples")
+        #logger.log(f"created {len(all_images) * args.batch_size} samples")
+        print(f"created {len(all_images) * args.batch_size} samples")
 
     arr = np.concatenate(all_images, axis=0)
     arr = arr[: args.num_samples]
@@ -88,17 +100,22 @@ def main():
         label_arr = np.concatenate(all_labels, axis=0)
         label_arr = label_arr[: args.num_samples]
     #if dist.get_rank() == 0:
-        
+
+    Path(args.write_dir).mkdir(parents=True, exist_ok=True)
+
     shape_str = "x".join([str(x) for x in arr.shape])
-    out_path = os.path.join(logger.get_dir(), f"samples_{shape_str}.npz")
-    logger.log(f"saving to {out_path}")
+    out_path = os.path.join(args.write_dir, f"samples_{shape_str}.npz")
+    #logger.log(f"saving to {out_path}")
+    print(f"saving to {out_path}")
+
     if args.class_cond:
         np.savez(out_path, arr, label_arr)
     else:
         np.savez(out_path, arr)
 
     #dist.barrier()
-    logger.log("sampling complete")
+    #logger.log("sampling complete")
+    print("sampling complete")
 
 
 def create_argparser():
@@ -107,6 +124,8 @@ def create_argparser():
                     batch_size=16,
                     use_ddim=False,
                     model_path="",
+                    write_dir="",
+                    sampling_method='sde'
                 )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
