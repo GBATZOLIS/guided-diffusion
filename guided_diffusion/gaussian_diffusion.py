@@ -745,9 +745,9 @@ class GaussianDiffusion:
                 alpha_t = th.exp(-1/4 * sde_t ** 2 *(bmax-bmin) - 1/2 * sde_t * bmin)
                 sigma_t_square = 1 - alpha_t**2
                 score_t = _broadcoast_to_shape(alpha_t/sigma_t_square, x.shape) * out["pred_xstart"] - _broadcoast_to_shape(1/sigma_t_square, x.shape) * x
-                sde_f = -1/2*(bmin+sde_t*(bmax-bmin))*x
+                sde_f = -1/2 * _broadcoast_to_shape(bmin+sde_t*(bmax-bmin), x.shape) * x
                 sde_g_square = bmin+sde_t*(bmax-bmin)
-                out = sde_f - 1/2 * sde_g_square * score_t
+                out = sde_f - 1/2 * _broadcoast_to_shape(sde_g_square, score_t.shape) * score_t
                 return out
             
             return f
