@@ -60,6 +60,7 @@ def model_and_diffusion_defaults():
         resblock_updown=False,
         use_fp16=False,
         use_new_attention_order=False,
+        index2time_dir='/home/gb511/projects/improved_sampling/guided-diffusion/optimal_t.pickle'
     )
     res.update(diffusion_defaults())
     return res
