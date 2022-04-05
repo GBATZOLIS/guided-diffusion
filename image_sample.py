@@ -95,7 +95,7 @@ def main():
 
 
 def create_argparser():
-    defaults = dict(index2time_dir=None,
+    defaults = dict(index2time_dir='/home/gb511/projects/improved_sampling/guided-diffusion/optimal_t.pickle',
                     clip_denoised=True,
                     num_samples=10000,
                     batch_size=16,
