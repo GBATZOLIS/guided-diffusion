@@ -29,9 +29,9 @@ def main():
 
     logger.log("creating model and diffusion...")
 
-    print(list(model_and_diffusion_defaults().keys()).append('index2time_dir'))
+    print(model_and_diffusion_defaults().keys())
     model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, list(model_and_diffusion_defaults().keys()).append('index2time_dir'))
+        **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
     #model.load_state_dict(
     #    dist_util.load_state_dict(args.model_path, map_location="cpu")
