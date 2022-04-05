@@ -1,6 +1,6 @@
 import argparse
 import inspect
-
+import pickle 
 from . import gaussian_diffusion as gd
 from .respace import SpacedDiffusion, space_timesteps
 from .unet import SuperResModel, UNetModel, EncoderUNetModel
@@ -95,6 +95,7 @@ def create_model_and_diffusion(
     resblock_updown,
     use_fp16,
     use_new_attention_order,
+    index2time_dir
 ):
     model = create_model(
         image_size,
@@ -123,6 +124,7 @@ def create_model_and_diffusion(
         rescale_timesteps=rescale_timesteps,
         rescale_learned_sigmas=rescale_learned_sigmas,
         timestep_respacing=timestep_respacing,
+        index2time_dir=index2time_dir
     )
     return model, diffusion
 
@@ -394,7 +396,11 @@ def create_gaussian_diffusion(
     rescale_timesteps=False,
     rescale_learned_sigmas=False,
     timestep_respacing="",
+    index2time_dir=None
 ):
+    with open('optimal_t.pickle', 'rb') as handle:
+        index2time = pickle.load(handle) #dictionary
+
     betas = gd.get_named_beta_schedule(noise_schedule, steps)
     if use_kl:
         loss_type = gd.LossType.RESCALED_KL
@@ -405,6 +411,7 @@ def create_gaussian_diffusion(
     if not timestep_respacing:
         timestep_respacing = [steps]
     return SpacedDiffusion(
+        index2time=index2time,
         use_timesteps=space_timesteps(steps, timestep_respacing),
         betas=betas,
         model_mean_type=(

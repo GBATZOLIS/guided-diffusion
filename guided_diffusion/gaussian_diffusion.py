@@ -687,7 +687,6 @@ class GaussianDiffusion:
         if progress:
             # Lazy import so that we don't depend on tqdm.
             from tqdm.auto import tqdm
-
             indices = tqdm(indices)
 
         for i in indices:
@@ -705,6 +704,105 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
+    
+    def pc_sample_loop(
+        self,
+        model,
+        shape,
+        noise=None,
+        clip_denoised=True,
+        denoised_fn=None,
+        cond_fn=None,
+        model_kwargs=None,
+        device=None,
+        progress=False,
+        eta=0.0,
+    ):
+        """
+        Generate samples from the model using pc ODE sampler.
+
+        Same usage as p_sample_loop().
+        """
+
+        def get_f_fn(model, cond_fn, clip_denoised, denoised_fn, model_kwargs):
+            # We assume the VP SDE proposed by Song#
+            # We selected the diffusion times denoted as sde_t which match the trained snr with the vp sde proposed by Song.
+            bmin, bmax = 0.1, 20 
+
+            def f(x, sde_t, t_index):
+                out = self.p_mean_variance(
+                        model,
+                        x,
+                        t_index,
+                        clip_denoised=clip_denoised,
+                        denoised_fn=denoised_fn,
+                        model_kwargs=model_kwargs,
+                    )
+
+                if cond_fn is not None:
+                    out = self.condition_score(cond_fn, out, x, t_index, model_kwargs=model_kwargs)
+
+                alpha_t = th.exp(-1/4 * sde_t ** 2 *(bmax-bmin) - 1/2 * sde_t * bmin)
+                sigma_t_square = 1 - alpha_t**2
+                score_t = _broadcoast_to_shape(alpha_t/sigma_t_square, x.shape) * out["pred_xstart"] - _broadcoast_to_shape(1/sigma_t_square, x.shape) * x
+                sde_f = -1/2*(bmin+sde_t*(bmax-bmin))*x
+                sde_g_square = bmin+sde_t*(bmax-bmin)
+                out = sde_f - 1/2 * sde_g_square * score_t
+                return out
+            
+            return f
+        
+        def predict(x, f_0, h):
+            prediction = x + f_0 * h
+            return prediction
+
+        def correct(x, f_1, f_0, h):
+            correction = x + h/2 * (f_1 + f_0)
+            return correction
+
+        if device is None:
+            device = next(model.parameters()).device
+
+        assert isinstance(shape, (tuple, list))
+
+        if noise is not None:
+            x = noise
+        else:
+            x = th.randn(*shape, device=device)
+
+        indices = list(range(self.num_timesteps))[::-1][:-1]
+
+        if progress:
+            # Lazy import so that we don't depend on tqdm.
+            from tqdm.auto import tqdm
+            indices = tqdm(indices)
+
+        ode_f = get_f_fn(model, cond_fn, clip_denoised, denoised_fn, model_kwargs)
+        with th.no_grad():
+            for i in indices: #999,998, ..., 2, 1 - skip 0
+                #convert index to diffusion time based on the VP SDE provided by Song.
+                sde_t = self.index2time[i]
+                sde_t_next = self.index2time[i-1]
+                h = sde_t_next - sde_t
+
+                sde_t = th.tensor([sde_t] * shape[0], device=device) #actual diffusing time
+                sde_t_next = th.tensor([sde_t_next] * shape[0], device=device)
+
+                t = th.tensor([i] * shape[0], device=device) #index
+                t_next = th.tensor([i-1] * shape[0], device=device)
+
+                #evaluate
+                f_0 = ode_f(x, sde_t, t)
+                #predict
+                x_1 = predict(x, f_0, h)
+                #evaluate
+                f_1 = ode_f(x_1, t + h, t_next)
+                #correct once
+                x_2 = correct(x, f_1, f_0, h)
+
+                x = x_2
+        
+        return x 
 
     def _vb_terms_bpd(
         self, model, x_start, x_t, t, clip_denoised=True, model_kwargs=None
@@ -906,3 +1004,8 @@ def _extract_into_tensor(arr, timesteps, broadcast_shape):
     while len(res.shape) < len(broadcast_shape):
         res = res[..., None]
     return res.expand(broadcast_shape)
+
+def _broadcoast_to_shape(tensor, broadcast_shape):
+    while len(tensor.shape) < len(broadcast_shape):
+        tensor = tensor[..., None]
+    return tensor.expand(broadcast_shape)

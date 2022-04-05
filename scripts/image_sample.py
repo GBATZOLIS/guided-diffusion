@@ -28,7 +28,7 @@ def main():
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, model_and_diffusion_defaults().keys())
+        **args_to_dict(args, list(model_and_diffusion_defaults().keys()).append('index2time_dir'))
     )
     model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
@@ -91,13 +91,13 @@ def main():
 
 
 def create_argparser():
-    defaults = dict(
-        clip_denoised=True,
-        num_samples=10000,
-        batch_size=16,
-        use_ddim=False,
-        model_path="",
-    )
+    defaults = dict(index2time_dir=None,
+                    clip_denoised=True,
+                    num_samples=10000,
+                    batch_size=16,
+                    use_ddim=False,
+                    model_path="",
+                )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
