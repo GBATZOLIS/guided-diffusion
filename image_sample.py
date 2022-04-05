@@ -78,6 +78,7 @@ def main():
         sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
         sample = sample.permute(0, 2, 3, 1)
         sample = sample.contiguous()
+        print(sample.shape)
 
         #gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
         #dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
@@ -95,6 +96,7 @@ def main():
         print(f"created {len(all_images) * args.batch_size} samples")
 
     arr = np.concatenate(all_images, axis=0)
+    
     arr = arr[: args.num_samples]
     if args.class_cond:
         label_arr = np.concatenate(all_labels, axis=0)
@@ -107,7 +109,8 @@ def main():
     out_path = os.path.join(args.write_dir, f"samples_{shape_str}.npz")
     #logger.log(f"saving to {out_path}")
     print(f"saving to {out_path}")
-
+    print(arr.shape)
+    
     if args.class_cond:
         np.savez(out_path, arr, label_arr)
     else:
