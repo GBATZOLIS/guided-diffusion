@@ -23,11 +23,13 @@ from guided_diffusion.script_util import (
 def main():
     args = create_argparser().parse_args()
     print(args.index2time_dir)
-    
+
     #dist_util.setup_dist()
     logger.configure()
 
     logger.log("creating model and diffusion...")
+
+    print(list(model_and_diffusion_defaults().keys()).append('index2time_dir'))
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, list(model_and_diffusion_defaults().keys()).append('index2time_dir'))
     )
