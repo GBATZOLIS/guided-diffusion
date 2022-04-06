@@ -66,6 +66,7 @@ def main():
             )
             model_kwargs["y"] = classes
 
+        th.manual_seed(len(all_images))
         sample_fn = get_sampling_fn(diffusion, args.sampling_method)
         
         sample = sample_fn(
