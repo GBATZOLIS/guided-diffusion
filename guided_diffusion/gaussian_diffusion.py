@@ -788,7 +788,7 @@ class GaussianDiffusion:
             for i in indices: #999,998, ..., 2, 1 - skip 0
                 #convert index to diffusion time based on the VP SDE provided by Song.
                 sde_t = self.index2time[self.timestep_map[i]]
-                print(sde_t, self.timestep_map[i])
+                #print(sde_t, self.timestep_map[i])
 
                 sde_t_next = self.index2time[self.timestep_map[i-1]]
                 h = sde_t_next - sde_t
@@ -797,7 +797,7 @@ class GaussianDiffusion:
                 #sde_t_next = th.tensor([sde_t_next] * shape[0], device=device)
                 
                 t = th.tensor([i] * shape[0], device=device) #index
-                print(t)
+                
                 t_next = th.tensor([i-1] * shape[0], device=device)
 
                 #evaluate
