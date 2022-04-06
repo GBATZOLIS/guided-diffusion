@@ -796,9 +796,9 @@ class GaussianDiffusion:
                 sde_t = th.tensor([sde_t] * shape[0], device=device) #actual diffusing time
                 #sde_t_next = th.tensor([sde_t_next] * shape[0], device=device)
                 
-                t = th.tensor([self.timestep_map[i]] * shape[0], device=device) #index
+                t = th.tensor([i] * shape[0], device=device) #index
                 print(t)
-                t_next = th.tensor([self.timestep_map[i-1]] * shape[0], device=device)
+                t_next = th.tensor([i-1] * shape[0], device=device)
 
                 #evaluate
                 f_0 = ode_f(x, sde_t, t)
