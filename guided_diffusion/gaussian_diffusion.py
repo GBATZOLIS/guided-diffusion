@@ -802,7 +802,7 @@ class GaussianDiffusion:
 
                 #evaluate
                 f_0 = ode_f(x, sde_t, t)
-                #predict
+                #predictgit
                 x_1 = predict(x, f_0, h)
                 #evaluate
                 f_1 = ode_f(x_1, t + h, t_next)
