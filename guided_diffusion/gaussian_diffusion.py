@@ -809,7 +809,7 @@ class GaussianDiffusion:
                 #correct once
                 x_2 = correct(x, f_1, f_0, h)
 
-                x = x_1
+                x = x_2
         
         return x 
 
