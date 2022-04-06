@@ -805,9 +805,9 @@ class GaussianDiffusion:
                 #predict
                 x_1 = predict(x, f_0, h)
                 #evaluate
-                #f_1 = ode_f(x_1, t + h, t_next)
+                f_1 = ode_f(x_1, t + h, t_next)
                 #correct once
-                #x_2 = correct(x, f_1, f_0, h)
+                x_2 = correct(x, f_1, f_0, h)
 
                 x = x_1
         
