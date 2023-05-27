@@ -741,6 +741,79 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
+    def scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True, beta = 1e-2):
+        #Compute scoreVAE training loss
+        #we assume that the diffusion model predicts the noise (noise predictor -> epsilon)
+        def get_encoder_correction_fn(encoder):
+              def get_log_density_fn(encoder):
+                def log_density_fn(x, z, t):
+                  latent_distribution_parameters = encoder(x, t)
+                  latent_dim = latent_distribution_parameters.size(1)//2
+                  mean_z = latent_distribution_parameters[:, :latent_dim]
+                  log_var_z = latent_distribution_parameters[:, latent_dim:]
+                  logdensity = -1/2*th.sum(th.square(z - mean_z)/log_var_z.exp(), dim=1)
+                  return logdensity
+                
+                return log_density_fn
+
+              def encoder_correction_fn(x, z, t):
+                  if not train: 
+                    th.set_grad_enabled(True)
+
+                  log_density_fn = get_log_density_fn(encoder)
+                  device = x.device
+                  x.requires_grad=True
+                  ftx = log_density_fn(x, z, t)
+                  grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=th.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+                  #assert grad_log_density.size() == x.size()
+
+                  if not train:
+                    th.set_grad_enabled(False)
+
+                  return grad_log_density
+
+              return encoder_correction_fn
+
+        #create the score correction function that depends on the encoder
+        encoder_correction_fn = get_encoder_correction_fn(encoder)
+
+        terms = {} #initialise the terms dictionary that stores the loss values
+
+        #compute the parameters of the encoding distribution p_φ(z|x_t)
+        latent_distribution_parameters = encoder(x_start, th.zeros_like(t))
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_z = latent_distribution_parameters[:, :latent_dim]
+        log_var_z = latent_distribution_parameters[:, latent_dim:]
+
+        #sample the latent factor z
+        z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z) 
+
+        #sample x_t from the perturbation kernel
+        x_t = self.q_sample(x_start, t, noise=noise)
+
+        #compute the correction: -1*sqrt(1-a_t_bar)*grad(log(p_φ(z|x_t)))
+        score_correction = encoder_correction_fn(x_t, z, t) #grad(log(p_φ(z|x_t)))
+        #take into account algorithm 2 -> scale the output of the grad_log_density by -1*sqrt(1-a_t_bar)
+        epsilon_correction = -1*_extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)*score_correction #-1*sqrt(1-a_t_bar)*grad(log(p_φ(z|x_t)))
+        epsilon = diffusion_model(x_t, t) #the diffusion model is assumed to be a noise predictor
+        
+        corrected_eps = epsilon + epsilon_correction
+
+        target = noise
+        terms["mse"] = mean_flat((target - corrected_eps) ** 2) #reconstruction term
+
+        #compute the KL penalty term: terms['kl-penalty']
+        kl_loss = -0.5 * th.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1)
+        terms["kl-penalty"] = kl_loss
+
+        #compute the weighted loss
+        terms['loss'] = terms["mse"] + beta * terms["kl-penalty"]
+
+        return terms
+
+
     def training_losses(self, model, x_start, t, model_kwargs=None, noise=None):
         """
         Compute training losses for a single timestep.
@@ -776,6 +849,7 @@ class GaussianDiffusion:
         elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
             model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
 
+            #this if statement checks if we use the hybrid objective
             if self.model_var_type in [
                 ModelVarType.LEARNED,
                 ModelVarType.LEARNED_RANGE,
