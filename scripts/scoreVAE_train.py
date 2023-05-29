@@ -12,8 +12,8 @@ from guided_diffusion.script_util import (
     create_model_and_diffusion,
     args_to_dict,
     add_dict_to_argparser,
-    classifier_and_diffusion_defaults,
-    create_classifier_and_diffusion,
+    encoder_defaults,
+    create_encoder
 )
 from guided_diffusion.train_scoreVAE_util import TrainLoop
 
@@ -26,8 +26,8 @@ def main():
 
     logger.log("creating model and diffusion...")
 
-    encoder, diffusion = create_classifier_and_diffusion(
-        **args_to_dict(args, classifier_and_diffusion_defaults().keys()))
+    encoder = create_encoder(
+        **args_to_dict(args, encoder_defaults().keys()))
 
     diffusion_model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
@@ -80,9 +80,20 @@ def create_argparser():
         log_interval=10,
         save_interval=10000,
         resume_checkpoint="",
-        diffusion_model_checkpoint="",
+        
         use_fp16=False,
         fp16_scale_growth=1e-3,
+        
+        ### ScoreVAE settings #new
+        diffusion_model_checkpoint="",
+        latent_dim = 1024, 
+        encoder_use_fp16 = False,
+        encoder_width = 128,
+        encoder_depth = 2,
+        encoder_attention_resolutions = "32,16,8",
+        encoder_use_scale_shift_norm = True,
+        encoder_resblock_updown = True,
+        encoder_pool = "attention"
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

@@ -70,6 +70,19 @@ def classifier_and_diffusion_defaults():
     res.update(diffusion_defaults())
     return res
 
+def encoder_defaults():
+    res = dict(
+                image_size=256,
+                latent_dim=1024,
+                encoder_use_fp16 = False,
+                encoder_width = 128,
+                encoder_depth = 2,
+                encoder_attention_resolutions = "32,16,8",
+                encoder_use_scale_shift_norm = True,
+                encoder_resblock_updown = True,
+                encoder_pool = "attention")
+    return res
+    
 
 def create_model_and_diffusion(
     image_size,
@@ -223,6 +236,47 @@ def create_classifier_and_diffusion(
         timestep_respacing=timestep_respacing,
     )
     return classifier, diffusion
+
+
+def create_encoder( image_size,
+                    latent_dim,
+                    encoder_use_fp16,
+                    encoder_width,
+                    encoder_depth,
+                    encoder_attention_resolutions,
+                    encoder_use_scale_shift_norm,
+                    encoder_resblock_updown,
+                    encoder_pool ):
+
+    if image_size == 512:
+        channel_mult = (0.5, 1, 1, 2, 2, 4, 4)
+    elif image_size == 256:
+        channel_mult = (1, 1, 2, 2, 4, 4)
+    elif image_size == 128:
+        channel_mult = (1, 1, 2, 3, 4)
+    elif image_size == 64:
+        channel_mult = (1, 2, 3, 4)
+    else:
+        raise ValueError(f"unsupported image size: {image_size}")
+
+    attention_ds = []
+    for res in encoder_attention_resolutions.split(","):
+        attention_ds.append(image_size // int(res))
+
+    return EncoderUNetModel(
+        image_size=image_size,
+        in_channels=3,
+        model_channels=encoder_width,
+        out_channels=2*latent_dim,
+        num_res_blocks=encoder_depth,
+        attention_resolutions=tuple(attention_ds),
+        channel_mult=channel_mult,
+        use_fp16=encoder_use_fp16,
+        num_head_channels=64,
+        use_scale_shift_norm=encoder_use_scale_shift_norm,
+        resblock_updown=encoder_resblock_updown,
+        pool=encoder_pool,
+    )
 
 
 def create_classifier(
