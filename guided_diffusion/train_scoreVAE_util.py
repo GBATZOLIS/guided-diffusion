@@ -111,6 +111,8 @@ class TrainLoop:
                 )
             self.use_ddp = False
             self.ddp_model = self.model
+        
+        logger.log("Setup is completed")
 
     def _load_n_freeze_pretrained_diffusion_model(self):
         if dist.get_rank() == 0:
@@ -142,6 +144,7 @@ class TrainLoop:
                 )
 
         dist_util.sync_params(self.model.parameters())
+        logger.log("Encoder parameters have been synchronised")
 
     def _load_ema_parameters(self, rate):
         ema_params = copy.deepcopy(self.mp_trainer.master_params)
@@ -172,6 +175,7 @@ class TrainLoop:
             self.opt.load_state_dict(state_dict)
 
     def run_loop(self):
+        logger.log("Training loop starts now...")
         while (
             not self.lr_anneal_steps
             or self.step + self.resume_step < self.lr_anneal_steps
