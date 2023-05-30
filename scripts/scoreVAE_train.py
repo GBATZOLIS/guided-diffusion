@@ -64,6 +64,7 @@ def main():
         schedule_sampler=schedule_sampler,
         weight_decay=args.weight_decay,
         lr_anneal_steps=args.lr_anneal_steps,
+        step_limit=args.step_limit
     ).run_loop()
 
 
@@ -81,7 +82,7 @@ def create_argparser():
         log_interval=10,
         save_interval=10000,
         resume_checkpoint="",
-        
+        step_limit = 2000000,
         use_fp16=False,
         fp16_scale_growth=1e-3,
         

@@ -40,6 +40,7 @@ class TrainLoop:
         schedule_sampler=None,
         weight_decay=0.0,
         lr_anneal_steps=0,
+        step_limit=2000000,
     ):
         self.model = model #encoder
         self.diffusion_model = diffusion_model #pretrained score model (denoising model -> will be converted to score model later)
@@ -62,6 +63,7 @@ class TrainLoop:
         self.schedule_sampler = schedule_sampler or UniformSampler(diffusion)
         self.weight_decay = weight_decay
         self.lr_anneal_steps = lr_anneal_steps
+        self.step_limit = step_limit
 
         self.step = 0
         self.resume_step = 0
@@ -176,10 +178,8 @@ class TrainLoop:
 
     def run_loop(self):
         logger.log("Training loop starts now...")
-        while (
-            not self.lr_anneal_steps
-            or self.step + self.resume_step < self.lr_anneal_steps
-        ):
+        
+        while (self.step + self.resume_step) < self.step_limit:
             batch, cond = next(self.data)
             logger.log("Training step %d ..." % self.step)
 
@@ -192,6 +192,7 @@ class TrainLoop:
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
             self.step += 1
+
         # Save the last checkpoint if it wasn't already saved.
         if (self.step - 1) % self.save_interval != 0:
             self.save()
