@@ -22,7 +22,7 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure(dir=args.log_dir)
+    logger.configure(dir=args.log_dir, format_strs=["tensorboard"])
 
     logger.log("creating model and diffusion...")
 

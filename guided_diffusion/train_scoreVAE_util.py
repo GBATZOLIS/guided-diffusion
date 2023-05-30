@@ -178,8 +178,8 @@ class TrainLoop:
         ):
             batch, cond = next(self.data)
             if self.step % 10 == 5:
-                print(self.step)
-                
+                logger.log("Training step %d ..." % self.step)
+
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
