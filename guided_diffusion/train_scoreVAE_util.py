@@ -178,8 +178,9 @@ class TrainLoop:
 
     def run_loop(self):
         logger.log("Training loop starts now...")
-        
+
         while (self.step + self.resume_step) < self.step_limit:
+            logger.log("Training step %d ..." % self.step)
             batch, cond = next(self.data)
             logger.log("Training step %d ..." % self.step)
 
