@@ -219,7 +219,7 @@ class ImageDataset(Dataset):
         arr = self.local_images[idx]
 
         if self.random_flip and random.random() < 0.5:
-            arr = arr[:, ::-1]
+            arr = np.ascontiguousarray(arr[:, ::-1])
 
         out_dict = {}
         if self.local_classes is not None:
