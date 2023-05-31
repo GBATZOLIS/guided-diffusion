@@ -43,7 +43,7 @@ class ImageDataModule(LightningDataModule):
         # Load all image files
         all_files = _list_image_files_recursively(self.data_dir)
         all_files = random.sample(all_files, 1000)  # select 1000 to make the loading and the debugging faster
-        all_images = load_images(all_files)
+        all_images = load_images(all_files, random_crop=self.random_crop, resolution=self.image_size)
 
         classes = None
         if self.class_cond:
@@ -132,7 +132,7 @@ def load_data(
 
     all_files = _list_image_files_recursively(data_dir)
     all_files = random.sample(all_files, 1000) #select 1000 to make the loading and the debugging faster
-    all_images = load_images(all_files)
+    all_images = load_images(all_files, random_crop, image_size)
 
     classes = None
     if class_cond:
@@ -174,16 +174,23 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-def load_image(path):
-    with bf.BlobFile(path, "rb") as f:
-        pil_image = Image.open(f)
-        pil_image.load()
-        pil_image = pil_image.convert("RGB")
-        np_image = np.array(pil_image)  # Convert PIL Image to numpy array
-        np_image = np_image.astype(np.float32) / 127.5 - 1  # Normalization
-    return np_image
+def get_load_img_fn(random_crop, resolution):
+    def load_image(path):
+        with bf.BlobFile(path, "rb") as f:
+            pil_image = Image.open(f)
+            pil_image.load()
+            pil_image = pil_image.convert("RGB")
+            if random_crop:
+                arr = random_crop_arr(pil_image, resolution)
+            else:
+                arr = center_crop_arr(pil_image, resolution)
+            arr = arr.astype(np.float32) / 127.5 - 1  # Normalization
+        return arr
+    
+    return load_image
 
-def load_images(image_paths):
+def load_images(image_paths, random_crop, resolution):
+    load_image = get_load_img_fn(random_crop, resolution)
     with multiprocessing.Pool() as pool:
         images = list(tqdm(pool.imap(load_image, image_paths), total=len(image_paths)))
     return images
@@ -210,12 +217,7 @@ class ImageDataset(Dataset):
         return len(self.local_images)
 
     def __getitem__(self, idx):
-        pil_image = self.local_images[idx]
-        
-        if self.random_crop:
-            arr = random_crop_arr(pil_image, self.resolution)
-        else:
-            arr = center_crop_arr(pil_image, self.resolution)
+        arr = self.local_images[idx]
 
         if self.random_flip and random.random() < 0.5:
             arr = arr[:, ::-1]
