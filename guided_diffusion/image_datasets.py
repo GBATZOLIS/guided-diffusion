@@ -7,7 +7,7 @@ from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
 
-import multiprocessing #new
+import multiprocessing
 
 def load_data(
     *,
