@@ -12,6 +12,7 @@ import torch
 from torch.utils.data import random_split
 from pytorch_lightning import LightningDataModule
 from torchvision import transforms
+from tqdm import tqdm
 
 # ... existing functions and classes (load_data, ImageDataset, etc.) ...
 
@@ -61,7 +62,7 @@ class ImageDataModule(LightningDataModule):
 
         # Ensure reproducibility
         torch.manual_seed(42)
-        
+
         train_size = int(0.8 * len(full_dataset))
         val_size = int(0.1 * len(full_dataset))
         test_size = len(full_dataset) - train_size - val_size
@@ -177,11 +178,13 @@ def load_image(path):
     with bf.BlobFile(path, "rb") as f:
         pil_image = Image.open(f)
         pil_image.load()
-    return pil_image.convert("RGB")
+        pil_image.convert("RGB")
+        pil_image = pil_image.astype(np.float32) / 127.5 - 1
+    return pil_image
 
 def load_images(image_paths):
     with multiprocessing.Pool() as pool:
-        images = pool.map(load_image, image_paths)
+        images = list(tqdm(pool.imap(load_image, image_paths), total=len(image_paths)))
     return images
 
 class ImageDataset(Dataset):
@@ -207,13 +210,7 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         pil_image = self.local_images[idx]
-
-        ##this is to be commented
-        #with bf.BlobFile(path, "rb") as f:
-        #    pil_image = Image.open(f)
-        #    pil_image.load()
-        #pil_image = pil_image.convert("RGB")
-
+        
         if self.random_crop:
             arr = random_crop_arr(pil_image, self.resolution)
         else:
@@ -221,8 +218,6 @@ class ImageDataset(Dataset):
 
         if self.random_flip and random.random() < 0.5:
             arr = arr[:, ::-1]
-
-        arr = arr.astype(np.float32) / 127.5 - 1
 
         out_dict = {}
         if self.local_classes is not None:

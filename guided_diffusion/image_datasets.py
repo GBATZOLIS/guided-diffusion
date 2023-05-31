@@ -120,13 +120,7 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         pil_image = self.local_images[idx]
-
-        ##this is to be commented
-        #with bf.BlobFile(path, "rb") as f:
-        #    pil_image = Image.open(f)
-        #    pil_image.load()
-        #pil_image = pil_image.convert("RGB")
-
+        
         if self.random_crop:
             arr = random_crop_arr(pil_image, self.resolution)
         else:
