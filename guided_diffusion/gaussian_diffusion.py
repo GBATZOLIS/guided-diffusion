@@ -791,6 +791,7 @@ class GaussianDiffusion:
         z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z) 
 
         #sample x_t from the perturbation kernel
+        noise = th.randn_like(x_start)
         x_t = self.q_sample(x_start, t, noise=noise)
 
         #compute the correction: -1*sqrt(1-a_t_bar)*grad(log(p_φ(z|x_t)))
