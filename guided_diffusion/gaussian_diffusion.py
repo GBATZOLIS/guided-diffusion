@@ -798,7 +798,8 @@ class GaussianDiffusion:
         #take into account algorithm 2 -> scale the output of the grad_log_density by -1*sqrt(1-a_t_bar)
         epsilon_correction = -1*_extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)*score_correction #-1*sqrt(1-a_t_bar)*grad(log(p_φ(z|x_t)))
         epsilon = diffusion_model(x_t, t) #the diffusion model is assumed to be a noise predictor
-        
+        epsilon = epsilon[:,:3,::] #in case we have a diffusion model that learns sigmas as well
+
         corrected_eps = epsilon + epsilon_correction
 
         target = noise
