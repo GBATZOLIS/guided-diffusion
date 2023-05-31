@@ -6,7 +6,7 @@ import blobfile as bf
 from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
-
+from tqdm import tqdm
 import multiprocessing
 
 def load_data(
@@ -94,7 +94,7 @@ def load_image(path):
 
 def load_images(image_paths):
     with multiprocessing.Pool() as pool:
-        images = pool.map(load_image, image_paths)
+        images = list(tqdm(pool.imap(load_image, image_paths), total=len(image_paths)))
     return images
 
 class ImageDataset(Dataset):
