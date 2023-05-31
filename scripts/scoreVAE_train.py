@@ -16,7 +16,14 @@ from guided_diffusion.script_util import (
     create_encoder
 )
 from guided_diffusion.train_scoreVAE_util import TrainLoop
+import psutil
 
+def print_memory_usage():
+    mem_info = psutil.virtual_memory()
+    logger.log(f'Used memory: {mem_info.used / 1024**3:.2f} GB')
+    logger.log(f'Total memory: {mem_info.total / 1024**3:.2f} GB')
+    logger.log(f'Free memory: {mem_info.free / 1024**3:.2f} GB')
+    logger.log(f'Memory percentage used: {mem_info.percent}%')
 
 def main():
     args = create_argparser().parse_args()
@@ -37,13 +44,22 @@ def main():
     diffusion_model.to(dist_util.dev())
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
+    #-----dataset-----
     logger.log("creating the datamodule...")
+    # Before loading data
+    logger.log("memory report before loading the dataset in RAM...")
+    print_memory_usage()
     datamodule = ImageDataModule(data_dir=args.data_dir,
                                 batch_size=args.batch_size,
                                 image_size=args.image_size,
                                 class_cond=args.class_cond,
                                 num_workers=4)
+    
+    logger.log("memory report after loading the dataset in RAM...")
+    print_memory_usage()
+
     datamodule.setup()
+    #-----------------
 
     logger.log("training...")
     TrainLoop(

@@ -88,7 +88,9 @@ def load_image(path):
     with bf.BlobFile(path, "rb") as f:
         pil_image = Image.open(f)
         pil_image.load()
-    return pil_image.convert("RGB")
+        pil_image.convert("RGB")
+        pil_image = pil_image.astype(np.float32) / 127.5 - 1
+    return pil_image
 
 def load_images(image_paths):
     with multiprocessing.Pool() as pool:
@@ -132,8 +134,6 @@ class ImageDataset(Dataset):
 
         if self.random_flip and random.random() < 0.5:
             arr = arr[:, ::-1]
-
-        arr = arr.astype(np.float32) / 127.5 - 1
 
         out_dict = {}
         if self.local_classes is not None:
