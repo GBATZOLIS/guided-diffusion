@@ -1,7 +1,7 @@
 import copy
 import functools
 import os
-
+import time
 import blobfile as bf
 import torch as th
 import torch.distributed as dist
@@ -181,8 +181,11 @@ class TrainLoop:
 
         while (self.step + self.resume_step) < self.step_limit:
             logger.log("Training step %d ..." % self.step)
+            start_time = time.time() 
             batch, cond = next(self.data)
-            logger.log("Training step %d ..." % self.step)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            logger.log(f'Time taken for operation: {elapsed_time} seconds')
 
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
