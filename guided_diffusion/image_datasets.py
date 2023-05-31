@@ -44,6 +44,7 @@ def load_data(
     all_files = random.sample(all_files, 1000) #select 1000 to make the loading and the debugging faster
 
     all_images = load_images(all_files)
+    logger.log('Images loaded in memory')
 
     classes = None
     if class_cond:
