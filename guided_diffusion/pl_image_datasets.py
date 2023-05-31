@@ -178,9 +178,10 @@ def load_image(path):
     with bf.BlobFile(path, "rb") as f:
         pil_image = Image.open(f)
         pil_image.load()
-        pil_image.convert("RGB")
-        pil_image = pil_image.astype(np.float32) / 127.5 - 1
-    return pil_image
+        pil_image = pil_image.convert("RGB")
+        np_image = np.array(pil_image)  # Convert PIL Image to numpy array
+        np_image = np_image.astype(np.float32) / 127.5 - 1  # Normalization
+    return np_image
 
 def load_images(image_paths):
     with multiprocessing.Pool() as pool:
