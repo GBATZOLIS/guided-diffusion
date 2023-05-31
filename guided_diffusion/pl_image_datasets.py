@@ -174,26 +174,25 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-def get_load_img_fn(random_crop, resolution):
-    def load_image(path):
-        with bf.BlobFile(path, "rb") as f:
-            pil_image = Image.open(f)
-            pil_image.load()
-            pil_image = pil_image.convert("RGB")
-            if random_crop:
-                arr = random_crop_arr(pil_image, resolution)
-            else:
-                arr = center_crop_arr(pil_image, resolution)
-            arr = arr.astype(np.float32) / 127.5 - 1  # Normalization
-        return arr
-    
-    return load_image
+def load_image(params):
+    path, random_crop, resolution = params
+    with bf.BlobFile(path, "rb") as f:
+        pil_image = Image.open(f)
+        pil_image.load()
+        pil_image = pil_image.convert("RGB")
+        if random_crop:
+            arr = random_crop_arr(pil_image, resolution)
+        else:
+            arr = center_crop_arr(pil_image, resolution)
+        arr = arr.astype(np.float32) / 127.5 - 1  # Normalization
+    return arr
 
 def load_images(image_paths, random_crop, resolution):
-    load_image = get_load_img_fn(random_crop, resolution)
     with multiprocessing.Pool() as pool:
-        images = list(tqdm(pool.imap(load_image, image_paths), total=len(image_paths)))
+        params = [(path, random_crop, resolution) for path in image_paths]
+        images = list(tqdm(pool.imap(load_image, params), total=len(image_paths)))
     return images
+
 
 class ImageDataset(Dataset):
     def __init__(
