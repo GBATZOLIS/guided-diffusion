@@ -5,7 +5,7 @@ Train a diffusion model on images.
 import argparse
 
 from guided_diffusion import dist_util, logger
-from guided_diffusion.image_datasets import load_data
+from guided_diffusion.pl_image_datasets import ImageDataModule
 from guided_diffusion.resample import create_named_schedule_sampler
 from guided_diffusion.script_util import (
     model_and_diffusion_defaults,
@@ -37,20 +37,20 @@ def main():
     diffusion_model.to(dist_util.dev())
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
-    logger.log("creating data loader...")
-    data = load_data(
-        data_dir=args.data_dir,
-        batch_size=args.batch_size,
-        image_size=args.image_size,
-        class_cond=args.class_cond,
-    )
+    logger.log("creating the datamodule...")
+    datamodule = ImageDataModule(data_dir=args.data_dir,
+                                batch_size=args.batch_size,
+                                image_size=args.image_size,
+                                class_cond=args.class_cond,
+                                num_workers=4)
+    datamodule.setup()
 
     logger.log("training...")
     TrainLoop(
         model=encoder,
         diffusion_model=diffusion_model, 
         diffusion=diffusion,
-        data=data,
+        datamodule=datamodule,
         batch_size=args.batch_size,
         microbatch=args.microbatch,
         lr=args.lr,

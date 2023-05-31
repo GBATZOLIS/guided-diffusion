@@ -7,7 +7,7 @@ import torch as th
 import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 from torch.optim import AdamW
-
+import torch
 from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
@@ -26,7 +26,7 @@ class TrainLoop:
         model,
         diffusion_model, #new
         diffusion,
-        data,
+        datamodule,
         batch_size,
         microbatch,
         lr,
@@ -45,7 +45,11 @@ class TrainLoop:
         self.model = model #encoder
         self.diffusion_model = diffusion_model #pretrained score model (denoising model -> will be converted to score model later)
         self.diffusion = diffusion
-        self.data = data
+        self.datamodule = datamodule
+
+        self.train_dataloader = datamodule.train_dataloader()
+        self.val_dataloader = datamodule.val_dataloader()
+
         self.batch_size = batch_size
         self.microbatch = microbatch if microbatch > 0 else batch_size
         self.lr = lr
@@ -182,7 +186,7 @@ class TrainLoop:
         while (self.step + self.resume_step) < self.step_limit:
             logger.log("Training step %d ..." % self.step)
             start_time = time.time() 
-            batch, cond = next(self.data)
+            batch, cond = next(iter(self.train_dataloader))
             end_time = time.time()
             elapsed_time = end_time - start_time
             logger.log(f'Time taken for operation: {elapsed_time} seconds')
