@@ -7,6 +7,7 @@ from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
 
+import multiprocessing #new
 
 def load_data(
     *,
@@ -38,7 +39,12 @@ def load_data(
     """
     if not data_dir:
         raise ValueError("unspecified data directory")
+
     all_files = _list_image_files_recursively(data_dir)
+    all_files = random.sample(all_files, 1000) #select 1000 to make the loading and the debugging faster
+
+    all_images = load_images(all_files)
+
     classes = None
     if class_cond:
         # Assume classes are the first part of the filename,
@@ -46,9 +52,10 @@ def load_data(
         class_names = [bf.basename(path).split("_")[0] for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
+    
     dataset = ImageDataset(
         image_size,
-        all_files,
+        all_images,
         classes=classes,
         shard=MPI.COMM_WORLD.Get_rank(),
         num_shards=MPI.COMM_WORLD.Get_size(),
@@ -57,11 +64,11 @@ def load_data(
     )
     if deterministic:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=False, num_workers=4, drop_last=True
+            dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=True
         )
     else:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=True, num_workers=4, drop_last=True
+            dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True
         )
     while True:
         yield from loader
@@ -78,12 +85,22 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
+def load_image(path):
+    with bf.BlobFile(path, "rb") as f:
+        pil_image = Image.open(f)
+        pil_image.load()
+    return pil_image.convert("RGB")
+
+def load_images(image_paths):
+    with multiprocessing.Pool() as pool:
+        images = pool.map(load_image, image_paths)
+    return images
 
 class ImageDataset(Dataset):
     def __init__(
         self,
         resolution,
-        image_paths,
+        images,
         classes=None,
         shard=0,
         num_shards=1,
@@ -92,7 +109,7 @@ class ImageDataset(Dataset):
     ):
         super().__init__()
         self.resolution = resolution
-        self.local_images = image_paths[shard:][::num_shards]
+        self.local_images = images[shard:][::num_shards]
         self.local_classes = None if classes is None else classes[shard:][::num_shards]
         self.random_crop = random_crop
         self.random_flip = random_flip
@@ -101,11 +118,13 @@ class ImageDataset(Dataset):
         return len(self.local_images)
 
     def __getitem__(self, idx):
-        path = self.local_images[idx]
-        with bf.BlobFile(path, "rb") as f:
-            pil_image = Image.open(f)
-            pil_image.load()
-        pil_image = pil_image.convert("RGB")
+        pil_image = self.local_images[idx]
+
+        ##this is to be commented
+        #with bf.BlobFile(path, "rb") as f:
+        #    pil_image = Image.open(f)
+        #    pil_image.load()
+        #pil_image = pil_image.convert("RGB")
 
         if self.random_crop:
             arr = random_crop_arr(pil_image, self.resolution)
