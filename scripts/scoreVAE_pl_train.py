@@ -50,7 +50,7 @@ def main():
     print("training...")
     logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
 
-    callbacks = [EMA(decay=args.ema_rate), LoadAndFreezeModelCallback(args)]
+    callbacks = [EMA(decay=float(args.ema_rate)), LoadAndFreezeModelCallback(args)]
     trainer = pl.Trainer(gpus=args.gpus,
                           num_nodes = args.num_nodes,
                           accelerator = args.accelerator,
