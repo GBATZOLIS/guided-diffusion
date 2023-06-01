@@ -140,7 +140,7 @@ class LoadAndFreezeModelCallback(Callback):
             print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
             pl_module.diffusion_model.load_state_dict(
                 th.load(
-                    self.diffusion_model_checkpoint, map_location=lambda storage, loc: storage.cuda(trainer.root_device)
+                    self.diffusion_model_checkpoint, map_location=lambda storage, loc: storage.cuda(pl_module.device)
                 )
             )
 
