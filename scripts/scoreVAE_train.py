@@ -53,7 +53,7 @@ def main():
                                 batch_size=args.batch_size,
                                 image_size=args.image_size,
                                 class_cond=args.class_cond,
-                                num_workers=8)
+                                num_workers=1)
     
     logger.log("memory report after loading the dataset in RAM...")
     print_memory_usage()
