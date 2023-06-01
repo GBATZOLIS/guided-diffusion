@@ -42,7 +42,7 @@ class ImageDataModule(LightningDataModule):
 
         # Load all image files
         all_files = _list_image_files_recursively(self.data_dir)
-        all_files = random.sample(all_files, 1000)  # select 1000 to make the loading and the debugging faster
+        all_files = random.sample(all_files, 250)  # select 1000 to make the loading and the debugging faster
         all_images = load_images(all_files, random_crop=self.random_crop, resolution=self.image_size)
 
         classes = None
