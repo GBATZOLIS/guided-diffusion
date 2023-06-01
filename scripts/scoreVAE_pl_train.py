@@ -48,7 +48,7 @@ def main():
     #-----------------
 
     print("training...")
-    logger = pl.loggers.TensorBoardLogger(args.logdir, name='', version=args.log_name)
+    logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
 
     callbacks = [EMA(decay=args.ema_rate), LoadAndFreezeModelCallback(args)]
     trainer = pl.Trainer(gpus=args.gpus,
@@ -76,10 +76,10 @@ def create_argparser():
         weight_decay=0.0,
         lr_anneal_steps=0,
         gpus=1, #new
-        nodes=1, #new
+        num_nodes=1, #new
         accelerator = None, #new
         workers = 4, #new
-        accumulate_grad_batches = False, #new
+        accumulate_grad_batches=1, #new
         grad_clip = 0., #new 
         batch_size=1,
         microbatch=-1,  # -1 disables microbatches
