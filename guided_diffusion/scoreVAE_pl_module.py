@@ -32,7 +32,7 @@ class ScoreVAE(pl.LightningModule):
     def __init__(self, args):
         super(ScoreVAE, self).__init__()
         self.save_hyperparameters()
-        
+
         self.args = args
 
         self.encoder = create_encoder(
@@ -137,7 +137,7 @@ class LoadAndFreezeModelCallback(Callback):
 
     def on_train_start(self, trainer, pl_module):
         if trainer.global_rank == 0:
-            trainer.logger.info(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
+            print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
             pl_module.diffusion_model.load_state_dict(
                 th.load(
                     self.diffusion_model_checkpoint, map_location=lambda storage, loc: storage.cuda(trainer.root_device)
