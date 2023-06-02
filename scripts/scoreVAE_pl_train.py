@@ -54,7 +54,6 @@ def main():
     trainer = pl.Trainer( accelerator = 'gpu',
                           strategy='ddp_find_unused_parameters_true',
                           devices=args.gpus,
-                          precision=16,
                           num_nodes = args.num_nodes,
                           accumulate_grad_batches = args.accumulate_grad_batches,
                           gradient_clip_val = args.grad_clip,
