@@ -765,7 +765,7 @@ class GaussianDiffusion:
 
                   log_density_fn = get_log_density_fn(encoder)
                   device = x.device
-                  x.requires_grad=True
+                  #x.requires_grad=True
                   ftx = log_density_fn(x, z, t)
                   grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
                                       grad_outputs=th.ones(ftx.size()).to(device),
