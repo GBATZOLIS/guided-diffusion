@@ -37,10 +37,12 @@ class ScoreVAE(pl.LightningModule):
 
         self.encoder = create_encoder(
         **args_to_dict(args, encoder_defaults().keys()))
+        self.encoder = torch.compile(self.encoder)
 
         self.diffusion_model, self.diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
         )
+        self.diffusion_model = torch.compile(self.diffusion_model)
         self.schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, self.diffusion)
 
         # store the diffusion model checkpoint path
@@ -61,7 +63,7 @@ class ScoreVAE(pl.LightningModule):
         for param in self.diffusion_model.parameters():
             param.requires_grad = False
         
-        self.diffusion_model = torch.compile(self.diffusion_model)
+        
 
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
