@@ -14,7 +14,7 @@ from guided_diffusion.script_util import (
     encoder_defaults,
     create_encoder
 )
-from guided_diffusion.train_scoreVAE_util import TrainLoop
+
 from guided_diffusion.pl_ema import EMA
 from guided_diffusion.scoreVAE_pl_module import ScoreVAE, LoadAndFreezeModelCallback
 import pytorch_lightning as pl
