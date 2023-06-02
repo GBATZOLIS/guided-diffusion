@@ -64,7 +64,7 @@ def main():
                           )
 
     
-    compiled_model = torch.compile(LightningModule = ScoreVAE(args))
+    compiled_model = torch.compile(ScoreVAE(args))
     trainer.fit(compiled_model, datamodule=datamodule, ckpt_path=args.resume_checkpoint)
 
 def create_argparser():
