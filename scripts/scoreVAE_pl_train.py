@@ -60,12 +60,11 @@ def main():
                           max_steps=args.step_limit, 
                           max_epochs =args.epochs_limit,
                           callbacks=callbacks, 
-                          logger = logger,
-                          resume_from_checkpoint=args.resume_checkpoint
+                          logger = logger
                           )
 
     LightningModule = ScoreVAE(args)
-    trainer.fit(LightningModule, datamodule=datamodule)
+    trainer.fit(LightningModule, datamodule=datamodule, ckpt_path=args.resume_checkpoint)
 
 def create_argparser():
     defaults = dict(
