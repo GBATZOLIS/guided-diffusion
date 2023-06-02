@@ -756,10 +756,12 @@ class GaussianDiffusion:
                 
                 return log_density_fn
 
-              def encoder_correction_fn(x, z, t):
+              def encoder_correction_fn(x_t, z, t):
                   if not train: 
                     th.set_grad_enabled(True)
-                    x.requires_grad_()
+                  
+                  x = x_t.detach()
+                  x.requires_grad_()
 
                   log_density_fn = get_log_density_fn(encoder)
                   device = x.device
