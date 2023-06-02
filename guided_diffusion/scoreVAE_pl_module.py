@@ -42,6 +42,24 @@ class ScoreVAE(pl.LightningModule):
         )
         self.schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, self.diffusion)
 
+        # store the diffusion model checkpoint path
+        self.diffusion_model_checkpoint = args.diffusion_model_checkpoint
+        
+    def on_train_start(self):
+        # Replace the callback function with your lightning module
+        if self.trainer.global_rank == 0:
+            print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
+            self.diffusion_model.load_state_dict(
+                th.load(
+                    self.diffusion_model_checkpoint, 
+                    map_location=lambda storage, loc: storage.cuda(self.device)
+                )
+            )
+
+        # Freeze the unconditional score model
+        for param in self.diffusion_model.parameters():
+            param.requires_grad = False
+
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
@@ -129,6 +147,7 @@ class ScoreVAE(pl.LightningModule):
                 quartile = int(4 * sub_t / diffusion.num_timesteps)
                 self.log(f"{key}_q{quartile}", sub_loss)
 
+'''
 class LoadAndFreezeModelCallback(Callback):
     def __init__(self, args):
         super().__init__()
@@ -146,3 +165,4 @@ class LoadAndFreezeModelCallback(Callback):
         # Freeze the unconditional score model
         for param in pl_module.diffusion_model.parameters():
             param.requires_grad = False
+'''

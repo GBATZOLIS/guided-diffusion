@@ -16,7 +16,7 @@ from guided_diffusion.script_util import (
 )
 
 from guided_diffusion.pl_ema import EMA
-from guided_diffusion.scoreVAE_pl_module import ScoreVAE, LoadAndFreezeModelCallback
+from guided_diffusion.scoreVAE_pl_module import ScoreVAE
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 
@@ -50,10 +50,11 @@ def main():
     print("training...")
     logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
 
-    callbacks = [EMA(decay=float(args.ema_rate)), LoadAndFreezeModelCallback(args)]
-    trainer = pl.Trainer(gpus=args.gpus,
+    callbacks = [EMA(decay=float(args.ema_rate))]
+    trainer = pl.Trainer( accelerator = 'gpu',
+                          strategy="ddp",
+                          devices=args.gpus,
                           num_nodes = args.num_nodes,
-                          accelerator = args.accelerator,
                           accumulate_grad_batches = args.accumulate_grad_batches,
                           gradient_clip_val = args.grad_clip,
                           max_steps=args.step_limit, 
