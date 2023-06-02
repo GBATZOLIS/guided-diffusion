@@ -19,7 +19,7 @@ from guided_diffusion.pl_ema import EMA
 from guided_diffusion.scoreVAE_pl_module import ScoreVAE
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
-
+import torch
 import psutil
 
 
