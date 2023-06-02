@@ -26,6 +26,7 @@ from guided_diffusion.resample import create_named_schedule_sampler
 from pytorch_lightning.callbacks import Callback
 import torch.optim as optim
 from torch.optim import AdamW
+import torch 
 
 class ScoreVAE(pl.LightningModule):
     def __init__(self, args):
@@ -59,6 +60,8 @@ class ScoreVAE(pl.LightningModule):
         # Freeze the unconditional score model
         for param in self.diffusion_model.parameters():
             param.requires_grad = False
+        
+        self.diffusion_model = torch.compile(self.diffusion_model)
 
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
