@@ -122,7 +122,7 @@ class ScoreVAE(pl.LightningModule):
 
     def encode(self, x):
         #compute the parameters of the encoding distribution p_φ(z|x_t)
-        latent_distribution_parameters = self.encoder(x, th.zeros_like(t))
+        latent_distribution_parameters = self.encoder(x, th.zeros(size=(x.size(0))))
         latent_dim = latent_distribution_parameters.size(1)//2
         mean_z = latent_distribution_parameters[:, :latent_dim]
         log_var_z = latent_distribution_parameters[:, latent_dim:]
