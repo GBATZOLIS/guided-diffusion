@@ -274,6 +274,7 @@ class SampleLoggingCallback(Callback):
         input_samples = batch[0].to(pl_module.device)
         z = pl_module.encode(input_samples)
         reconstructed_samples = pl_module.reconstruct(z)
+        print('recinstruction done')
 
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples, batch))
         avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
