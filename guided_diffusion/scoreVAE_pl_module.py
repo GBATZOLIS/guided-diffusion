@@ -27,6 +27,8 @@ from pytorch_lightning.callbacks import Callback
 import torch.optim as optim
 from torch.optim import AdamW
 import torch 
+import torchvision
+import lpips
 
 class ScoreVAE(pl.LightningModule):
     def __init__(self, args):
@@ -84,7 +86,7 @@ class ScoreVAE(pl.LightningModule):
                 )
 
         loss = (losses["loss"] * weights).mean()
-        self.log('train_loss', loss, prog_bar=True)
+        self.log('train_loss', loss, prog_bar=True, sync_dist=True)
         self.log_loss_dict(self.diffusion, t, {k: v * weights for k, v in losses.items()})
 
         return loss
@@ -112,9 +114,84 @@ class ScoreVAE(pl.LightningModule):
                 )
 
         loss = (losses["loss"] * weights).mean()
-        self.log('val_loss', loss, prog_bar=True)
+        self.log('val_loss', loss, prog_bar=True, sync_dist=True)
         #self.log_loss_dict(self.diffusion, t, {k: v * weights for k, v in losses.items()})
+
+
         return loss
+
+    def encode(self, x):
+        #compute the parameters of the encoding distribution p_φ(z|x_t)
+        latent_distribution_parameters = self.encoder(x, th.zeros_like(t))
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_z = latent_distribution_parameters[:, :latent_dim]
+        log_var_z = latent_distribution_parameters[:, latent_dim:]
+
+        #sample the latent factor z
+        z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z)
+        return z
+    
+    def reconstruct(self, z):
+        def get_encoder_correction_fn(encoder):
+            def get_log_density_fn(encoder):
+                def log_density_fn(x, z, t):
+                    latent_distribution_parameters = encoder(x, t)
+                    latent_dim = latent_distribution_parameters.size(1)//2
+                    mean_z = latent_distribution_parameters[:, :latent_dim]
+                    log_var_z = latent_distribution_parameters[:, latent_dim:]
+                    logdensity = -1/2*th.sum(th.square(z - mean_z)/log_var_z.exp(), dim=1)
+                    return logdensity
+                    
+                return log_density_fn
+
+            def encoder_correction_fn(x_t, t, z):
+                th.set_grad_enabled(True)
+                x = x_t.detach()
+                x.requires_grad_()
+                log_density_fn = get_log_density_fn(encoder)
+                device = x.device
+                ftx = log_density_fn(x, z, t)
+                grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=th.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+                th.set_grad_enabled(False)
+                return grad_log_density
+
+            return encoder_correction_fn
+        
+        encoder_correction_fn = get_encoder_correction_fn(self.encoder)
+        model_kwargs={}
+        model_kwargs['z'] = z
+
+        sample_fn = (
+            self.diffusion.p_sample_loop if not self.args.use_ddim else self.diffusion.ddim_sample_loop
+        )
+        
+        sample = sample_fn(
+            self.diffusion_model,
+            (z.size(0), 3, self.args.image_size, self.args.image_size),
+            clip_denoised=self.args.clip_denoised,
+            cond_fn=encoder_correction_fn,
+            model_kwargs=model_kwargs,
+            device=self.device
+        )
+        return sample #expected range [-1, 1] for images (depends on the preprocessed values)
+
+    def sample_from_diffusion_model(self, num_samples=None):
+        if not num_samples:
+            num_samples = self.args.batchsize
+        
+        sample_fn = (
+            self.diffusion.p_sample_loop if not self.args.use_ddim else self.diffusion.ddim_sample_loop
+        )
+        
+        sample = sample_fn(
+            self.diffusion_model,
+            (num_samples, 3, self.args.image_size, self.args.image_size),
+            clip_denoised=self.args.clip_denoised,
+            device=self.device
+            )
+        return sample
 
     def configure_optimizers(self):
         class scheduler_lambda_function:
@@ -139,6 +216,14 @@ class ScoreVAE(pl.LightningModule):
                     
         return [optimizer], [scheduler]
 
+    def log_sample(self, sample, name):
+        #expected sample range [-1, 1]
+        sample = sample.detach().cpu()
+        sample = ((sample + 1) * 127.5).clamp(0, 255)
+        sample = sample.to(torch.float32) / 255.0  # Convert to [0, 1] range
+        grid_images = torchvision.utils.make_grid(sample, normalize=False)
+        self.logger.experiment.add_image(name, grid_images, self.current_epoch)
+
     #logging helper
     def log_loss_dict(self, diffusion, ts, losses):
         for key, values in losses.items():
@@ -146,7 +231,7 @@ class ScoreVAE(pl.LightningModule):
             # Log the quantiles (four quartiles, in particular).
             for sub_t, sub_loss in zip(ts.cpu().detach().numpy(), values.detach().cpu().numpy()):
                 quartile = int(4 * sub_t / diffusion.num_timesteps)
-                self.log(f"{key}_q{quartile}", sub_loss)
+                self.log(f"{key}_q{quartile}", sub_loss, sync_dist=True)
 
 '''
 class LoadAndFreezeModelCallback(Callback):
@@ -167,3 +252,45 @@ class LoadAndFreezeModelCallback(Callback):
         for param in pl_module.diffusion_model.parameters():
             param.requires_grad = False
 '''
+
+class SampleLoggingCallback(Callback):
+    def __init__(self):
+        super().__init__()
+        self.lpips_distance_fn = lpips.LPIPS(net='vgg')
+
+    def setup(self, trainer, pl_module, stage):
+        self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
+
+    def on_epoch_end(self, trainer, pl_module):
+        if trainer.current_epoch == 0:
+            diffusion_samples = pl_module.sample_from_diffusion_model()
+            pl_module.log_sample(diffusion_samples, name='diffusion_samples')
+
+        # Obtain a batch from the validation dataloader
+        dataloader = trainer.datamodule.val_dataloader()
+        batch = next(iter(dataloader))
+
+        # Generate sample using the encode and reconstruct methods
+        input_samples = batch[0].to(pl_module.device)
+        z = pl_module.encode(input_samples)
+        reconstructed_samples = pl_module.reconstruct(z)
+
+        avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples, batch))
+        avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
+
+        pl_module.log('LPIPS', avg_lpips_score.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+
+        # Log the generated samples
+        pl_module.log_sample(input_samples, name='input_samples')
+        pl_module.log_sample(reconstructed_samples, name='reconstructed_samples')
+
+        difference = torch.flatten(reconstructed_samples, start_dim=1) - torch.flatten(input_samples, start_dim=1)
+        L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+        avg_L2norm = torch.mean(L2norm)
+        avg_L2norm = trainer.training_type_plugin.reduce(avg_L2norm, reduction='mean')
+
+        # Log the average L2 norm
+        pl_module.log('L2', avg_L2norm.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+
+
+

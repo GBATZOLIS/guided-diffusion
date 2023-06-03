@@ -768,10 +768,10 @@ class GaussianDiffusion:
                   #x.requires_grad=True
                   
                   ftx = log_density_fn(x, z, t)
-                  print(x.requires_grad)
-                  print(x.grad_fn)
-                  print(ftx.requires_grad)
-                  print(ftx.grad_fn)
+                  #print(x.requires_grad)
+                  #print(x.grad_fn)
+                  #print(ftx.requires_grad)
+                  #print(ftx.grad_fn)
                   grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
                                       grad_outputs=th.ones(ftx.size()).to(device),
                                       create_graph=True, retain_graph=True, only_inputs=True)[0]

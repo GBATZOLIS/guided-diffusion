@@ -16,7 +16,7 @@ from guided_diffusion.script_util import (
 )
 
 from guided_diffusion.pl_ema import EMA
-from guided_diffusion.scoreVAE_pl_module import ScoreVAE
+from guided_diffusion.scoreVAE_pl_module import ScoreVAE, SampleLoggingCallback
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 import torch
@@ -50,7 +50,7 @@ def main():
     print("training...")
     logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
 
-    callbacks = [EMA(decay=float(args.ema_rate))]
+    callbacks = [EMA(decay=float(args.ema_rate)), SampleLoggingCallback()]
     trainer = pl.Trainer( accelerator = 'gpu',
                           strategy='ddp_find_unused_parameters_true',
                           devices=args.gpus,
@@ -102,7 +102,11 @@ def create_argparser():
         encoder_attention_resolutions = "32,16,8",
         encoder_use_scale_shift_norm = True,
         encoder_resblock_updown = True,
-        encoder_pool = "attention"
+        encoder_pool = "attention",
+
+        #sampling settings
+        clip_denoised=True,
+        use_ddim=False
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
