@@ -264,7 +264,7 @@ class SampleLoggingCallback(Callback):
         self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if trainer.current_epoch == 0:
+        if trainer.current_epoch == 1:
             diffusion_samples = pl_module.sample_from_diffusion_model()
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
