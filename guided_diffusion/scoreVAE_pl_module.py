@@ -173,7 +173,8 @@ class ScoreVAE(pl.LightningModule):
             clip_denoised=self.args.clip_denoised,
             cond_fn=encoder_correction_fn,
             model_kwargs=model_kwargs,
-            device=self.device
+            device=self.device,
+            progress=True
         )
         return sample #expected range [-1, 1] for images (depends on the preprocessed values)
 
@@ -189,7 +190,8 @@ class ScoreVAE(pl.LightningModule):
             self.diffusion_model,
             (num_samples, 3, self.args.image_size, self.args.image_size),
             clip_denoised=self.args.clip_denoised,
-            device=self.device
+            device=self.device, 
+            progress=True
             )
         return sample
 
