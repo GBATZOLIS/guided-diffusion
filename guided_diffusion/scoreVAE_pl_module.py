@@ -179,7 +179,7 @@ class ScoreVAE(pl.LightningModule):
 
     def sample_from_diffusion_model(self, num_samples=None):
         if not num_samples:
-            num_samples = self.args.batchsize
+            num_samples = self.args.batch_size
         
         sample_fn = (
             self.diffusion.p_sample_loop if not self.args.use_ddim else self.diffusion.ddim_sample_loop
