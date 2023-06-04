@@ -66,8 +66,8 @@ class ScoreVAE(pl.LightningModule):
             param.requires_grad = False
         
         #self.diffusion_model = torch.compile(self.diffusion_model)
-        self.diffusion_model = self.diffusion_model.half()
-        print(next(self.diffusion_model.parameters()).dtype)
+        self.diffusion_model.convert_to_fp16()
+        
 
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
