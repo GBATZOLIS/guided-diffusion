@@ -125,7 +125,7 @@ def timestep_embedding(timesteps, dim, max_period=10000):
 
     # Convert embedding back to the original datatype of timesteps
     embedding = embedding.to(original_dtype)
-
+    print(embedding.dtype)
     
     return embedding
 
