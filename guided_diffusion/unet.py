@@ -647,7 +647,7 @@ class UNetModel(nn.Module):
         hs = []
 
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
-        emb = emb.to(x.dtype)
+        #emb = emb.to(x.dtype)
 
         print(x.dtype, emb.dtype, next(self.parameters()).dtype)
 

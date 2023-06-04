@@ -67,7 +67,7 @@ class ScoreVAE(pl.LightningModule):
         
         #self.diffusion_model = torch.compile(self.diffusion_model)
         self.diffusion_model.convert_to_fp16()
-        self.diffusion_model.dtype =next(self.diffusion_model.parameters()).dtype
+        self.diffusion_model.dtype = torch.float16
         
 
     def training_step(self, batch, batch_idx):
