@@ -131,7 +131,7 @@ class ScoreVAE(pl.LightningModule):
         z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z)
         return z
     
-    def reconstruct(self, z):
+    def reconstruct(self, z, steps='default'):
         def get_encoder_correction_fn(encoder):
             def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
@@ -163,6 +163,12 @@ class ScoreVAE(pl.LightningModule):
         cond_kwargs={}
         cond_kwargs['z'] = z
 
+        if type(steps) == int: #integration steps
+            default_steps = self.diffusion.num_timesteps.copy()
+            self.diffusion.num_timesteps = steps
+            self.diffusion.rescale_timesteps = True
+
+
         sample_fn = (
             self.diffusion.p_sample_loop if not self.args.use_ddim else self.diffusion.ddim_sample_loop
         )
@@ -176,6 +182,11 @@ class ScoreVAE(pl.LightningModule):
             device=self.device,
             progress=True
         )
+
+        if type(steps) == int: #integration steps
+            self.diffusion.num_timesteps = default_steps
+            self.diffusion.rescale_timesteps = False
+
         return sample #expected range [-1, 1] for images (depends on the preprocessed values)
 
     def sample_from_diffusion_model(self, num_samples=None):
@@ -218,9 +229,9 @@ class ScoreVAE(pl.LightningModule):
                     
         return [optimizer], [scheduler]
 
-    def log_sample(self, sample, name):
+    def log_sample(self, image, name):
         #expected sample range [-1, 1]
-        sample = sample.detach().cpu()
+        sample = image.detach().cpu()
         sample = ((sample + 1) * 127.5).clamp(0, 255)
         sample = sample.to(torch.float32) / 255.0  # Convert to [0, 1] range
         grid_images = torchvision.utils.make_grid(sample, normalize=False)
@@ -276,10 +287,10 @@ class SampleLoggingCallback(Callback):
             # Generate sample using the encode and reconstruct methods
             input_samples = batch[0].to(pl_module.device)
             z = pl_module.encode(input_samples)
-            reconstructed_samples = pl_module.reconstruct(z)
+            reconstructed_samples = pl_module.reconstruct(z, steps=100)
             print('recinstruction done')
 
-            avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), batch.to(pl_module.device)))
+            avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), input_samples.to(pl_module.device)))
             avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
 
             pl_module.log('LPIPS', avg_lpips_score.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
