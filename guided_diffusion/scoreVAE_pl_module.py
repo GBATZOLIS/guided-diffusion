@@ -164,7 +164,7 @@ class ScoreVAE(pl.LightningModule):
         cond_kwargs['z'] = z
 
         if type(steps) == int: #integration steps
-            default_steps = self.diffusion.num_timesteps.copy()
+            default_steps = self.diffusion.num_timesteps
             self.diffusion.num_timesteps = steps
             self.diffusion.rescale_timesteps = True
 
