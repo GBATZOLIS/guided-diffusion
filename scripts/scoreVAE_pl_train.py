@@ -34,17 +34,17 @@ def main():
     args = create_argparser().parse_args()
 
     #-----dataset-----
-    print("memory report before loading the dataset in RAM...")
-    print_memory_usage()
+    #print("memory report before loading the dataset in RAM...")
+    #print_memory_usage()
     datamodule = ImageDataModule(data_dir=args.data_dir,
                                 batch_size=args.batch_size,
                                 image_size=args.image_size,
                                 class_cond=args.class_cond,
                                 num_workers=args.workers)
     
-    print("memory report after loading the dataset in RAM...")
-    print_memory_usage()
-    datamodule.setup()
+    #datamodule.setup()
+    #print("memory report after loading the dataset in RAM...")
+    #print_memory_usage()
     #-----------------
 
     print("training...")
