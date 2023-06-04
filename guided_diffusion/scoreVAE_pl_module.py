@@ -122,7 +122,7 @@ class ScoreVAE(pl.LightningModule):
 
     def encode(self, x):
         #compute the parameters of the encoding distribution p_φ(z|x_t)
-        latent_distribution_parameters = self.encoder(x, th.zeros(size=(x.size(0), )))
+        latent_distribution_parameters = self.encoder(x, th.zeros(size=(x.size(0),)).to(self.device))
         latent_dim = latent_distribution_parameters.size(1)//2
         mean_z = latent_distribution_parameters[:, :latent_dim]
         log_var_z = latent_distribution_parameters[:, latent_dim:]
@@ -268,32 +268,33 @@ class SampleLoggingCallback(Callback):
             diffusion_samples = pl_module.sample_from_diffusion_model()
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
-        # Obtain a batch from the validation dataloader
-        dataloader = trainer.datamodule.val_dataloader()
-        batch = next(iter(dataloader))
+        if trainer.current_epoch == 1 or (trainer.current_epoch+1) % 5 ==0:
+            # Obtain a batch from the validation dataloader
+            dataloader = trainer.datamodule.val_dataloader()
+            batch = next(iter(dataloader))
 
-        # Generate sample using the encode and reconstruct methods
-        input_samples = batch[0].to(pl_module.device)
-        z = pl_module.encode(input_samples)
-        reconstructed_samples = pl_module.reconstruct(z)
-        print('recinstruction done')
+            # Generate sample using the encode and reconstruct methods
+            input_samples = batch[0].to(pl_module.device)
+            z = pl_module.encode(input_samples)
+            reconstructed_samples = pl_module.reconstruct(z)
+            print('recinstruction done')
 
-        avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples, batch))
-        avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
+            avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples, batch))
+            avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
 
-        pl_module.log('LPIPS', avg_lpips_score.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+            pl_module.log('LPIPS', avg_lpips_score.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
-        # Log the generated samples
-        pl_module.log_sample(input_samples, name='input_samples')
-        pl_module.log_sample(reconstructed_samples, name='reconstructed_samples')
+            # Log the generated samples
+            pl_module.log_sample(input_samples, name='input_samples')
+            pl_module.log_sample(reconstructed_samples, name='reconstructed_samples')
 
-        difference = torch.flatten(reconstructed_samples, start_dim=1) - torch.flatten(input_samples, start_dim=1)
-        L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
-        avg_L2norm = torch.mean(L2norm)
-        avg_L2norm = trainer.training_type_plugin.reduce(avg_L2norm, reduction='mean')
+            difference = torch.flatten(reconstructed_samples, start_dim=1) - torch.flatten(input_samples, start_dim=1)
+            L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+            avg_L2norm = torch.mean(L2norm)
+            avg_L2norm = trainer.training_type_plugin.reduce(avg_L2norm, reduction='mean')
 
-        # Log the average L2 norm
-        pl_module.log('L2', avg_L2norm.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+            # Log the average L2 norm
+            pl_module.log('L2', avg_L2norm.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
 
 
