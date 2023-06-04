@@ -292,7 +292,7 @@ class SampleLoggingCallback(Callback):
 
             self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
             avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), input_samples.to(pl_module.device)))
-            avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
+            #avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
 
             pl_module.log('LPIPS', avg_lpips_score.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
@@ -303,7 +303,7 @@ class SampleLoggingCallback(Callback):
             difference = torch.flatten(reconstructed_samples, start_dim=1) - torch.flatten(input_samples, start_dim=1)
             L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
             avg_L2norm = torch.mean(L2norm)
-            avg_L2norm = trainer.training_type_plugin.reduce(avg_L2norm, reduction='mean')
+            #avg_L2norm = trainer.training_type_plugin.reduce(avg_L2norm, reduction='mean')
 
             # Log the average L2 norm
             pl_module.log('L2', avg_L2norm.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
