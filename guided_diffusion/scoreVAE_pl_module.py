@@ -65,7 +65,7 @@ class ScoreVAE(pl.LightningModule):
         for param in self.diffusion_model.parameters():
             param.requires_grad = False
         
-        self.diffusion_model = torch.compile(self.diffusion_model, mode="reduce-overhead")
+        self.diffusion_model = torch.compile(self.diffusion_model, mode="reduce-overhead", fullgraph=True)
 
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
