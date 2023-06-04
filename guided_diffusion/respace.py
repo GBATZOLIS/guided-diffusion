@@ -91,7 +91,7 @@ class SpacedDiffusion(GaussianDiffusion):
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
     def scoreVAE_training_losses(self, encoder, diffusion_model,  *args, **kwargs):
-        return super().scoreVAE_training_losses(self._wrap_model(encoder), self._wrap_model(diffusion_model, precision=16), *args, **kwargs)
+        return super().scoreVAE_training_losses(self._wrap_model(encoder), self._wrap_model(diffusion_model), *args, **kwargs)
 
     def training_losses(
         self, model, *args, **kwargs
@@ -104,11 +104,11 @@ class SpacedDiffusion(GaussianDiffusion):
     def condition_score(self, cond_fn, *args, **kwargs):
         return super().condition_score(self._wrap_model(cond_fn), *args, **kwargs)
 
-    def _wrap_model(self, model, precision=32):
+    def _wrap_model(self, model):
         if isinstance(model, _WrappedModel):
             return model
         return _WrappedModel(
-            model, self.timestep_map, self.rescale_timesteps, self.original_num_steps, precision
+            model, self.timestep_map, self.rescale_timesteps, self.original_num_steps
         )
 
     def _scale_timesteps(self, t):
@@ -117,22 +117,16 @@ class SpacedDiffusion(GaussianDiffusion):
 
 
 class _WrappedModel:
-    def __init__(self, model, timestep_map, rescale_timesteps, original_num_steps, precision=32):
+    def __init__(self, model, timestep_map, rescale_timesteps, original_num_steps):
         self.model = model
         self.timestep_map = timestep_map
         self.rescale_timesteps = rescale_timesteps
         self.original_num_steps = original_num_steps
-        self.precision = precision
 
     def __call__(self, x, ts, **kwargs):
         map_tensor = th.tensor(self.timestep_map, device=ts.device, dtype=ts.dtype)
         new_ts = map_tensor[ts]
         if self.rescale_timesteps:
             new_ts = new_ts.float() * (1000.0 / self.original_num_steps)
-        
-        if self.precision == 16:
-            x_half = x.half()
-            t_half = ts.half()
-            return self.model(x_half, t_half, **kwargs)
-        else:
-            return self.model(x, new_ts, **kwargs)
+
+        return self.model(x, new_ts, **kwargs)
