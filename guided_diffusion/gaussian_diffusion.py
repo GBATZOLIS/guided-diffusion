@@ -816,7 +816,7 @@ class GaussianDiffusion:
         with torch.no_grad():
             x_t_half = x_t.half()
             t_half = t.half()
-            epsilon = diffusion_model(x_t, t) #the diffusion model is assumed to be a noise predictor
+            epsilon = diffusion_model(x_t_half, t_half) #the diffusion model is assumed to be a noise predictor
             epsilon = epsilon[:,:3,::] #in case we have a diffusion model that learns sigmas as well
             epsilon = epsilon.float()
 
