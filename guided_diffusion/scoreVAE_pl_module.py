@@ -279,7 +279,7 @@ class SampleLoggingCallback(Callback):
             reconstructed_samples = pl_module.reconstruct(z)
             print('recinstruction done')
 
-            avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples, batch))
+            avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), batch.to(pl_module.device)))
             avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
 
             pl_module.log('LPIPS', avg_lpips_score.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)

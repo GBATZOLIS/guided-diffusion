@@ -60,7 +60,8 @@ def main():
                           max_steps=args.step_limit, 
                           max_epochs =args.epochs_limit,
                           callbacks=callbacks, 
-                          logger = logger
+                          logger = logger,
+                          num_sanity_val_steps=0
                           )
 
     compiled_model = ScoreVAE(args)
