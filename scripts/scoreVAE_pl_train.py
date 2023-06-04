@@ -53,7 +53,6 @@ def main():
     callbacks = [EMA(decay=float(args.ema_rate)), SampleLoggingCallback()]
     trainer = pl.Trainer( accelerator = 'gpu',
                           #strategy='ddp_find_unused_parameters_true',
-                          precision='16-mixed',
                           devices=args.gpus,
                           num_nodes = args.num_nodes,
                           accumulate_grad_batches = args.accumulate_grad_batches,
