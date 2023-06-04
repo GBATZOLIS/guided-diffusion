@@ -43,6 +43,8 @@ class ScoreVAE(pl.LightningModule):
         self.diffusion_model, self.diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
         )
+        self.diffusion_model = torch.compile(self.diffusion_model)
+        
         self.schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, self.diffusion)
 
         # store the diffusion model checkpoint path
