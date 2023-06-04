@@ -280,6 +280,7 @@ class SampleLoggingCallback(Callback):
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
         if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 5 ==0:
+            
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
             batch = next(iter(dataloader))
@@ -288,8 +289,8 @@ class SampleLoggingCallback(Callback):
             input_samples = batch[0].to(pl_module.device)
             z = pl_module.encode(input_samples)
             reconstructed_samples = pl_module.reconstruct(z, steps=100)
-            print('recinstruction done')
 
+            self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
             avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), input_samples.to(pl_module.device)))
             avg_lpips_score = trainer.training_type_plugin.reduce(avg_lpips_score, reduction='mean')
 
