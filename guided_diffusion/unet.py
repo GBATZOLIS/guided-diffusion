@@ -656,8 +656,10 @@ class UNetModel(nn.Module):
             emb = emb + self.label_emb(y)
 
         h = x.type(self.dtype)
+        print(h.dtype)
         for module in self.input_blocks:
             h = module(h, emb)
+            print(h.dtype)
             hs.append(h)
         h = self.middle_block(h, emb)
         for module in self.output_blocks:
