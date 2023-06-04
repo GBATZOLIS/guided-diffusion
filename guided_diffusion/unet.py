@@ -647,19 +647,14 @@ class UNetModel(nn.Module):
         hs = []
 
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
-        #emb = emb.to(x.dtype)
-
-        print(x.dtype, emb.dtype, next(self.parameters()).dtype)
 
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
         h = x.type(self.dtype)
-        print(h.dtype)
         for module in self.input_blocks:
             h = module(h, emb)
-            print(h.dtype)
             hs.append(h)
         h = self.middle_block(h, emb)
         for module in self.output_blocks:
