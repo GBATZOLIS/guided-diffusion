@@ -645,12 +645,10 @@ class UNetModel(nn.Module):
         ), "must specify y if and only if the model is class-conditional"
 
         hs = []
-        print(x.dtype)
-        tstep_embedding = timestep_embedding(timesteps, self.model_channels)
-        tstep_embedding = tstep_embedding.to(x.dtype)
-        emb = self.time_embed(tstep_embedding)
-        print(emb.dtype)
-        
+
+        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
+        emb = emb.to(x.dtype)
+
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
