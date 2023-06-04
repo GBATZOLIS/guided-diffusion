@@ -160,8 +160,8 @@ class ScoreVAE(pl.LightningModule):
             return encoder_correction_fn
         
         encoder_correction_fn = get_encoder_correction_fn(self.encoder)
-        model_kwargs={}
-        model_kwargs['z'] = z
+        cond_kwargs={}
+        cond_kwargs['z'] = z
 
         sample_fn = (
             self.diffusion.p_sample_loop if not self.args.use_ddim else self.diffusion.ddim_sample_loop
@@ -172,7 +172,7 @@ class ScoreVAE(pl.LightningModule):
             (z.size(0), 3, self.args.image_size, self.args.image_size),
             clip_denoised=self.args.clip_denoised,
             cond_fn=encoder_correction_fn,
-            model_kwargs=model_kwargs,
+            cond_kwargs=cond_kwargs,
             device=self.device,
             progress=True
         )
@@ -264,11 +264,11 @@ class SampleLoggingCallback(Callback):
         self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if trainer.current_epoch == 1:
+        if trainer.current_epoch == 2:
             diffusion_samples = pl_module.sample_from_diffusion_model()
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
-        if trainer.current_epoch == 1 or (trainer.current_epoch+1) % 5 ==0:
+        if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 5 ==0:
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
             batch = next(iter(dataloader))

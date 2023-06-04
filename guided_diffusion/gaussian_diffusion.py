@@ -400,6 +400,7 @@ class GaussianDiffusion:
         clip_denoised=True,
         denoised_fn=None,
         cond_fn=None,
+        cond_kwargs=None,
         model_kwargs=None,
     ):
         """
@@ -433,7 +434,7 @@ class GaussianDiffusion:
         )  # no noise when t == 0
         if cond_fn is not None:
             out["mean"] = self.condition_mean(
-                cond_fn, out, x, t, model_kwargs=model_kwargs
+                cond_fn, out, x, t, model_kwargs=cond_kwargs
             )
         sample = out["mean"] + nonzero_mask * th.exp(0.5 * out["log_variance"]) * noise
         return {"sample": sample, "pred_xstart": out["pred_xstart"]}
@@ -446,6 +447,7 @@ class GaussianDiffusion:
         clip_denoised=True,
         denoised_fn=None,
         cond_fn=None,
+        cond_kwargs=None,
         model_kwargs=None,
         device=None,
         progress=False,
@@ -477,6 +479,7 @@ class GaussianDiffusion:
             clip_denoised=clip_denoised,
             denoised_fn=denoised_fn,
             cond_fn=cond_fn,
+            cond_kwargs=cond_kwargs,
             model_kwargs=model_kwargs,
             device=device,
             progress=progress,
@@ -492,6 +495,7 @@ class GaussianDiffusion:
         clip_denoised=True,
         denoised_fn=None,
         cond_fn=None,
+        cond_kwargs=None,
         model_kwargs=None,
         device=None,
         progress=False,
@@ -529,6 +533,7 @@ class GaussianDiffusion:
                     clip_denoised=clip_denoised,
                     denoised_fn=denoised_fn,
                     cond_fn=cond_fn,
+                    cond_kwargs=cond_kwargs,
                     model_kwargs=model_kwargs,
                 )
                 yield out
