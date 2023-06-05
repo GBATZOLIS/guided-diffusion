@@ -52,7 +52,7 @@ class ScoreVAE(pl.LightningModule):
     
     def on_train_start(self):
         # Set the precision for 32-bit floating point matrix multiplication
-        #th.set_float32_matmul_precision('medium')  # or 'high'
+        th.set_float32_matmul_precision('medium')  # or 'high'
 
         # Load the pretrained diffusion model
         if self.trainer.global_rank == 0:
