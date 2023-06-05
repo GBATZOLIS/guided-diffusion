@@ -65,9 +65,9 @@ def main():
                           )
 
     compiled_model = ScoreVAE(args)
-    
+
     # Set the precision for 32-bit floating point matrix multiplication
-    th.set_float32_matmul_precision('medium')  # or 'high'
+    torch.set_float32_matmul_precision('medium')  # or 'high'
 
     #compiled_model = torch.compile(ScoreVAE(args))
     trainer.fit(compiled_model, datamodule=datamodule, ckpt_path=args.resume_checkpoint)
