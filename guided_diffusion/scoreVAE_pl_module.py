@@ -54,8 +54,7 @@ class ScoreVAE(pl.LightningModule):
         # Set the precision for 32-bit floating point matrix multiplication
         th.set_float32_matmul_precision('medium')  # or 'high'
 
-    def on_train_start(self):
-        # Replace the callback function with your lightning module
+        # Load the pretrained diffusion model
         if self.trainer.global_rank == 0:
             print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
             self.diffusion_model.load_state_dict(
@@ -65,11 +64,11 @@ class ScoreVAE(pl.LightningModule):
                 )
             )
 
-        # Freeze the unconditional score model
+        # Freeze the diffusion model
         for param in self.diffusion_model.parameters():
             param.requires_grad = False
-        
-        #self.diffusion_model = torch.compile(self.diffusion_model)
+
+        # Convert the diffusion model to FP16
         self.diffusion_model.convert_to_fp16()
         self.diffusion_model.dtype = torch.float16
         
