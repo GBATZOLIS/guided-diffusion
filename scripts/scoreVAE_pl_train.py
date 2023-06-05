@@ -64,12 +64,12 @@ def main():
                           num_sanity_val_steps=0
                           )
 
-    compiled_model = ScoreVAE(args)
+    #compiled_model = ScoreVAE(args)
+    compiled_model = torch.compile(ScoreVAE(args))
 
     # Set the precision for 32-bit floating point matrix multiplication
-    torch.set_float32_matmul_precision('medium')  # or 'high'
-
-    #compiled_model = torch.compile(ScoreVAE(args))
+    #torch.set_float32_matmul_precision('medium')  # or 'high'
+    
     trainer.fit(compiled_model, datamodule=datamodule, ckpt_path=args.resume_checkpoint)
 
 def create_argparser():
