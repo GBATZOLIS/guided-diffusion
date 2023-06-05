@@ -50,7 +50,7 @@ class ScoreVAE(pl.LightningModule):
         # store the diffusion model checkpoint path
         self.diffusion_model_checkpoint = args.diffusion_model_checkpoint
     
-    def setup(self, stage=None):
+    def on_train_start(self):
         # Set the precision for 32-bit floating point matrix multiplication
         th.set_float32_matmul_precision('medium')  # or 'high'
 
