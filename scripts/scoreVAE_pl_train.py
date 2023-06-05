@@ -64,8 +64,8 @@ def main():
                           num_sanity_val_steps=0
                           )
 
-    compiled_model = ScoreVAE(args)
-    #compiled_model = torch.compile(ScoreVAE(args))
+    #compiled_model = ScoreVAE(args)
+    compiled_model = torch.compile(ScoreVAE(args))
 
     # Set the precision for 32-bit floating point matrix multiplication
     #torch.set_float32_matmul_precision('medium')  # or 'high'
