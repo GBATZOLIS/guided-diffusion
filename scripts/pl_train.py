@@ -21,7 +21,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 import torch
 import psutil
-
+from pathlib import Path
 
 def print_memory_usage():
     mem_info = psutil.virtual_memory()
@@ -43,6 +43,8 @@ def main():
     datamodule = Cifar10DataModule(args)
 
     print("training...")
+    log_dir = Path(args.log_dir)
+    log_dir.mkdir(parents=True, exist_ok=True)
     logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
 
     callbacks = [EMA(decay=float(args.ema_rate)), BaseSampleLoggingCallback()]
