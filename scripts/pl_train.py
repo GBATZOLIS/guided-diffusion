@@ -59,13 +59,13 @@ def main():
                           num_sanity_val_steps=0
                           )
 
-    compiled_model = BaseModule(args)
-    #compiled_model = BaseModule(args)
+    model = BaseModule(args)
+    model.diffusion_model = torch.compile(model.diffusion_model)
 
     # Set the precision for 32-bit floating point matrix multiplication
     #torch.set_float32_matmul_precision('medium')  # or 'high'
     
-    trainer.fit(compiled_model, datamodule=datamodule, ckpt_path=args.resume_checkpoint)
+    trainer.fit(model, datamodule=datamodule, ckpt_path=args.resume_checkpoint)
 
 def create_argparser():
     defaults = dict(
