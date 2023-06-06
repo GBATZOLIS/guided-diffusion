@@ -60,7 +60,6 @@ def main():
                           )
 
     model = BaseModule(args)
-    model.diffusion_model = torch.compile(model.diffusion_model)
 
     # Set the precision for 32-bit floating point matrix multiplication
     #torch.set_float32_matmul_precision('medium')  # or 'high'
