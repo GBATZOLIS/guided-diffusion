@@ -15,6 +15,8 @@ from .resample import LossAwareSampler, UniformSampler
 #new
 import pytorch_lightning as pl 
 from guided_diffusion.script_util import (
+    create_gaussian_diffusion,
+    diffusion_defaults,
     model_and_diffusion_defaults,
     create_model_and_diffusion,
     args_to_dict,
@@ -138,7 +140,7 @@ class ScoreVAE(pl.LightningModule):
         z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z)
         return z
     
-    def reconstruct(self, z, steps='default'):
+    def reconstruct(self, z, time_respacing=""):
         def get_encoder_correction_fn(encoder):
             def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
@@ -170,14 +172,12 @@ class ScoreVAE(pl.LightningModule):
         cond_kwargs={}
         cond_kwargs['z'] = z
 
-        if type(steps) == int: #integration steps
-            default_steps = self.diffusion.num_timesteps
-            self.diffusion.num_timesteps = steps
-            self.diffusion.rescale_timesteps = True
-
+        diffusion_dict = args_to_dict(self.args, diffusion_defaults().keys())
+        diffusion_dict['timestep_respacing'] = time_respacing
+        sampling_diffusion = create_gaussian_diffusion(**diffusion_dict)
 
         sample_fn = (
-            self.diffusion.p_sample_loop if not self.args.use_ddim else self.diffusion.ddim_sample_loop
+            sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
         )
         
         sample = sample_fn(
@@ -190,18 +190,18 @@ class ScoreVAE(pl.LightningModule):
             progress=True
         )
 
-        if type(steps) == int: #integration steps
-            self.diffusion.num_timesteps = default_steps
-            self.diffusion.rescale_timesteps = False
-
         return sample #expected range [-1, 1] for images (depends on the preprocessed values)
 
-    def sample_from_diffusion_model(self, num_samples=None):
+    def sample_from_diffusion_model(self, num_samples=None, time_respacing=""):
         if not num_samples:
             num_samples = self.args.batch_size
         
+        diffusion_dict = args_to_dict(self.args, diffusion_defaults().keys())
+        diffusion_dict['timestep_respacing'] = time_respacing
+        sampling_diffusion = create_gaussian_diffusion(**diffusion_dict)
+
         sample_fn = (
-            self.diffusion.p_sample_loop if not self.args.use_ddim else self.diffusion.ddim_sample_loop
+            sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
         )
         
         sample = sample_fn(
@@ -273,7 +273,7 @@ class LoadAndFreezeModelCallback(Callback):
             param.requires_grad = False
 '''
 
-class SampleLoggingCallback(Callback):
+class ScoreVAESampleLoggingCallback(Callback):
     def __init__(self):
         super().__init__()
         self.lpips_distance_fn = lpips.LPIPS(net='vgg')
@@ -283,7 +283,7 @@ class SampleLoggingCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         if trainer.current_epoch == 2:
-            diffusion_samples = pl_module.sample_from_diffusion_model()
+            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250')
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
         if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 5 ==0:
@@ -295,7 +295,7 @@ class SampleLoggingCallback(Callback):
             # Generate sample using the encode and reconstruct methods
             input_samples = batch[0].to(pl_module.device)
             z = pl_module.encode(input_samples)
-            reconstructed_samples = pl_module.reconstruct(z)
+            reconstructed_samples = pl_module.reconstruct(z, time_respacing='ddim250')
 
             self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
             avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), input_samples.to(pl_module.device)))

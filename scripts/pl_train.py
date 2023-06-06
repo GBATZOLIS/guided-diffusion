@@ -4,7 +4,7 @@ Train a diffusion model on images.
 
 import argparse
 
-from guided_diffusion.pl_image_datasets import ImageDataModule
+from guided_diffusion.pl_image_datasets import ImageDataModule, Cifar10DataModule
 from guided_diffusion.resample import create_named_schedule_sampler
 from guided_diffusion.script_util import (
     model_and_diffusion_defaults,
@@ -16,7 +16,7 @@ from guided_diffusion.script_util import (
 )
 
 from guided_diffusion.pl_ema import EMA
-from guided_diffusion.scoreVAE_pl_module import ScoreVAE, ScoreVAESampleLoggingCallback
+from guided_diffusion.pl_module import BaseModule, BaseSampleLoggingCallback
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 import torch
@@ -33,24 +33,19 @@ def print_memory_usage():
 def main():
     args = create_argparser().parse_args()
 
-    #-----dataset-----
-    #print("memory report before loading the dataset in RAM...")
-    #print_memory_usage()
+    '''
     datamodule = ImageDataModule(data_dir=args.data_dir,
                                 batch_size=args.batch_size,
                                 image_size=args.image_size,
                                 class_cond=args.class_cond,
                                 num_workers=args.workers)
+    '''
+    datamodule = Cifar10DataModule(args)
     
-    #datamodule.setup()
-    #print("memory report after loading the dataset in RAM...")
-    #print_memory_usage()
-    #-----------------
-
     print("training...")
     logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
 
-    callbacks = [EMA(decay=float(args.ema_rate)), ScoreVAESampleLoggingCallback()]
+    callbacks = [EMA(decay=float(args.ema_rate)), BaseSampleLoggingCallback()]
     trainer = pl.Trainer( accelerator = 'gpu',
                           #strategy='ddp_find_unused_parameters_true',
                           devices=args.gpus,
@@ -64,8 +59,8 @@ def main():
                           num_sanity_val_steps=0
                           )
 
-    #compiled_model = ScoreVAE(args)
-    compiled_model = torch.compile(ScoreVAE(args))
+    #compiled_model = torch.compile(BaseModule(args))
+    compiled_model = BaseModule(args)
 
     # Set the precision for 32-bit floating point matrix multiplication
     #torch.set_float32_matmul_precision('medium')  # or 'high'
@@ -97,17 +92,6 @@ def create_argparser():
         epochs_limit = 10000, #new
         use_fp16=False,
         fp16_scale_growth=1e-3,
-        
-        ### ScoreVAE settings #new
-        diffusion_model_checkpoint="",
-        latent_dim = 1024, 
-        encoder_use_fp16 = False,
-        encoder_width = 128,
-        encoder_depth = 2,
-        encoder_attention_resolutions = "32,16,8",
-        encoder_use_scale_shift_norm = True,
-        encoder_resblock_updown = True,
-        encoder_pool = "attention",
 
         #sampling settings
         clip_denoised=True,

@@ -11,8 +11,57 @@ import multiprocessing
 import torch
 from torch.utils.data import random_split
 from pytorch_lightning import LightningDataModule
-from torchvision import transforms
+from torchvision import transforms, datasets
 from tqdm import tqdm
+import pytorch_lightning as pl
+
+class CIFAR10Dataset(datasets.CIFAR10):
+    def __init__(self, args, train):
+        super().__init__(root=args.data_dir, train=train, download=True)
+        transforms_list = [
+            transforms.ToTensor(), 
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # tranform to [-1, 1] range
+        ]
+        self.transform_my = transforms.Compose(transforms_list)
+        self.return_labels = False
+    
+    def __getitem__(self, index):
+        x, y = super().__getitem__(index)
+        x = self.transform_my(x)
+        if self.return_labels:
+            return x, y
+        else:
+            return x
+
+class Cifar10DataModule(pl.LightningDataModule):
+    def __init__(self, args):
+        super().__init__()
+        self.args = args
+
+        #DataLoader arguments
+        self.train_workers = args.workers
+        self.val_workers = args.workers
+        self.test_workers = args.workers
+
+        self.train_batch = args.batch_size
+        self.val_batch = args.batch_size
+        self.test_batch = args.batch_size
+
+    def setup(self, stage=None):
+        train_dataset = CIFAR10Dataset(self.args, train=True)
+        self.train_data, self.valid_data = torch.utils.data.random_split(train_dataset, [45000, 5000])
+        self.test_data = CIFAR10Dataset(self.args, train=False)
+
+    def train_dataloader(self):
+        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True) 
+  
+    def val_dataloader(self):
+        return DataLoader(self.valid_data, batch_size = self.val_batch, num_workers=self.val_workers, shuffle=False) 
+  
+    def test_dataloader(self): 
+        return DataLoader(self.test_data, batch_size = self.test_batch, num_workers=self.test_workers, shuffle=False) 
+
+
 
 # ... existing functions and classes (load_data, ImageDataset, etc.) ...
 
