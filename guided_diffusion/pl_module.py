@@ -48,15 +48,14 @@ class BaseModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
-        x, cond = batch
+        x = batch
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
                 self.diffusion.training_losses,
                 self.diffusion_model,
                 x,
-                t,
-                model_kwargs=cond
+                t
             )
 
         losses = compute_losses()
@@ -74,15 +73,14 @@ class BaseModule(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
-        x, cond = batch
+        x = batch
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
                 self.diffusion.training_losses,
                 self.diffusion_model,
                 x,
-                t,
-                model_kwargs=cond
+                t
             )
 
         losses = compute_losses()
