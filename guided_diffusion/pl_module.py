@@ -174,6 +174,7 @@ class BaseSampleLoggingCallback(Callback):
         super().__init__()
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        diffusion_samples = pl_module.sample(time_respacing='ddim250')
-        pl_module.log_sample(diffusion_samples, name='diffusion_samples')
-
+        current_epoch = trainer.current_epoch
+        if current_epoch % 25 == 0:
+            diffusion_samples = pl_module.sample(time_respacing='ddim250')
+            pl_module.log_sample(diffusion_samples, name='diffusion_samples')
