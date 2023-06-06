@@ -23,7 +23,7 @@ class CIFAR10Dataset(datasets.CIFAR10):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # tranform to [-1, 1] range
         ]
         self.transform_my = transforms.Compose(transforms_list)
-        self.return_labels = False
+        self.return_labels = True
     
     def __getitem__(self, index):
         x, y = super().__getitem__(index)
