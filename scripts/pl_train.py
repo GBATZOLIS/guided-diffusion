@@ -59,7 +59,7 @@ def main():
                           num_sanity_val_steps=0
                           )
 
-    compiled_model = torch.compile(BaseModule(args))
+    compiled_model = torch.compile(BaseModule(args), mode='reduce-overhead')
     #compiled_model = BaseModule(args)
 
     # Set the precision for 32-bit floating point matrix multiplication
