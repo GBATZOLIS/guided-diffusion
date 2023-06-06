@@ -41,7 +41,7 @@ def main():
                                 num_workers=args.workers)
     '''
     datamodule = Cifar10DataModule(args)
-    
+
     print("training...")
     logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
 
@@ -59,8 +59,8 @@ def main():
                           num_sanity_val_steps=0
                           )
 
-    #compiled_model = torch.compile(BaseModule(args))
-    compiled_model = BaseModule(args)
+    compiled_model = torch.compile(BaseModule(args), mode='reduce-overhead')
+    #compiled_model = BaseModule(args)
 
     # Set the precision for 32-bit floating point matrix multiplication
     #torch.set_float32_matmul_precision('medium')  # or 'high'
