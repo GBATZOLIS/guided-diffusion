@@ -50,9 +50,9 @@ def main():
     logger = pl.loggers.TensorBoardLogger(save_dir=args.log_dir, version=args.log_name)
 
     callbacks = [EMA(decay=float(args.ema_rate)), BaseSampleLoggingCallback()]
-    trainer = pl.Trainer( accelerator = 'gpu' if args.gpus>0 else 'cpu',
+    trainer = pl.Trainer( accelerator = 'gpu' if args.gpus > 0 else 'cpu',
                           #strategy='ddp_find_unused_parameters_true',
-                          devices=args.gpus,
+                          devices=1 if args.gpus == 0 else args.gpus,
                           num_nodes = args.num_nodes,
                           accumulate_grad_batches = args.accumulate_grad_batches,
                           gradient_clip_val = args.grad_clip,
