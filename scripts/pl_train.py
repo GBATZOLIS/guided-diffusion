@@ -105,8 +105,9 @@ def create_argparser():
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
-    print(parser.log_dir)
+    
     add_dict_to_argparser(parser, defaults)
+    print(parser.log_dir)
 
     return parser
 
