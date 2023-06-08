@@ -107,7 +107,6 @@ def create_argparser():
     parser = argparse.ArgumentParser()
     
     add_dict_to_argparser(parser, defaults)
-    print(parser.log_dir)
 
     return parser
 
