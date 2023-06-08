@@ -32,20 +32,22 @@ def print_memory_usage():
 
 def main():
     args = create_argparser().parse_args()
-
-    '''
-    datamodule = ImageDataModule(data_dir=args.data_dir,
-                                batch_size=args.batch_size,
-                                image_size=args.image_size,
-                                class_cond=args.class_cond,
-                                num_workers=args.workers)
-    '''
-    datamodule = Cifar10DataModule(args)
+    
+    if args.dataset == 'cifar10':
+        datamodule = Cifar10DataModule(args)
+    else:
+        datamodule = ImageDataModule(data_dir=args.data_dir,
+                                     dataset=args.dataset,
+                                     percentage_use = 100,
+                                     batch_size=args.batch_size,
+                                     image_size=args.image_size,
+                                     class_cond=args.class_cond,
+                                     num_workers=args.workers)
 
     print("training...")
     log_dir = Path(args.log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
-    logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
+    logger = pl.loggers.TensorBoardLogger(save_dir=args.log_dir, version=args.log_name)
 
     callbacks = [EMA(decay=float(args.ema_rate)), BaseSampleLoggingCallback()]
     trainer = pl.Trainer( accelerator = 'gpu',

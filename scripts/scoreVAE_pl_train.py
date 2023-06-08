@@ -4,7 +4,7 @@ Train a diffusion model on images.
 
 import argparse
 
-from guided_diffusion.pl_image_datasets import ImageDataModule
+from guided_diffusion.pl_image_datasets import ImageDataModule, Cifar10DataModule
 from guided_diffusion.resample import create_named_schedule_sampler
 from guided_diffusion.script_util import (
     model_and_diffusion_defaults,
@@ -36,11 +36,16 @@ def main():
     #-----dataset-----
     #print("memory report before loading the dataset in RAM...")
     #print_memory_usage()
-    datamodule = ImageDataModule(data_dir=args.data_dir,
-                                batch_size=args.batch_size,
-                                image_size=args.image_size,
-                                class_cond=args.class_cond,
-                                num_workers=args.workers)
+    if args.dataset == 'cifar10':
+        datamodule = Cifar10DataModule(args)
+    else:
+        datamodule = ImageDataModule(data_dir=args.data_dir,
+                                     dataset=args.dataset,
+                                     percentage_use = 100,
+                                     batch_size=args.batch_size,
+                                     image_size=args.image_size,
+                                     class_cond=args.class_cond,
+                                     num_workers=args.workers)
     
     #datamodule.setup()
     #print("memory report after loading the dataset in RAM...")

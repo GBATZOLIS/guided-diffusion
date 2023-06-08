@@ -14,6 +14,7 @@ from pytorch_lightning import LightningDataModule
 from torchvision import transforms, datasets
 from tqdm import tqdm
 import pytorch_lightning as pl
+import os
 
 class CIFAR10Dataset(datasets.CIFAR10):
     def __init__(self, args, train):
@@ -62,7 +63,6 @@ class Cifar10DataModule(pl.LightningDataModule):
         return DataLoader(self.test_data, batch_size = self.test_batch, num_workers=self.test_workers, shuffle=False) 
 
 
-
 # ... existing functions and classes (load_data, ImageDataset, etc.) ...
 
 class ImageDataModule(LightningDataModule):
@@ -70,6 +70,7 @@ class ImageDataModule(LightningDataModule):
     def __init__(
         self,
         data_dir,
+        dataset,
         batch_size,
         image_size,
         class_cond=False,
@@ -80,6 +81,8 @@ class ImageDataModule(LightningDataModule):
         super().__init__()
 
         self.data_dir = data_dir
+        self.dataset = dataset
+        self.percentage_use = 100 #percentage of the original dataset to be used
         self.batch_size = batch_size
         self.image_size = image_size
         self.class_cond = class_cond
@@ -90,8 +93,9 @@ class ImageDataModule(LightningDataModule):
     def setup(self, stage=None):
 
         # Load all image files
-        all_files = _list_image_files_recursively(self.data_dir)
-        all_files = random.sample(all_files, 1000)  # select 1000 to make the loading and the debugging faster
+        all_files = _list_image_files_recursively(os.path.join(self.data_dir, self.dataset))
+        print('%s contains %d datapoints.' % (self.dataset, len(all_files)))
+        all_files = random.sample(all_files, int(self.percentage_use/100*len(all_files)))  # select the percentage of files to use
         all_images = load_images(all_files, random_crop=self.random_crop, resolution=self.image_size)
 
         classes = None
@@ -249,15 +253,13 @@ class ImageDataset(Dataset):
         resolution,
         images,
         classes=None,
-        shard=0,
-        num_shards=1,
         random_crop=False,
         random_flip=True,
     ):
         super().__init__()
         self.resolution = resolution
-        self.local_images = images[shard:][::num_shards]
-        self.local_classes = None if classes is None else classes[shard:][::num_shards]
+        self.local_images = images
+        self.local_classes = classes
         self.random_crop = random_crop
         self.random_flip = random_flip
 
