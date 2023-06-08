@@ -47,7 +47,7 @@ def main():
     print("training...")
     log_dir = Path(args.log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
-    logger = pl.loggers.TensorBoardLogger(save_dir=args.log_dir, version=args.log_name)
+    logger = pl.loggers.TensorBoardLogger(save_dir=log_dir, name='', version=args.log_name)
 
     callbacks = [EMA(decay=float(args.ema_rate)), BaseSampleLoggingCallback()]
     trainer = pl.Trainer( accelerator = 'gpu' if args.gpus > 0 else 'cpu',
