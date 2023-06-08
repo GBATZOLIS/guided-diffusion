@@ -45,7 +45,9 @@ def main():
                                      num_workers=args.workers)
 
     print("training...")
+    print(args.log_dir)
     log_dir = Path(args.log_dir)
+    print(log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
     logger = pl.loggers.TensorBoardLogger(save_dir=log_dir, name='', version=args.log_name)
 
