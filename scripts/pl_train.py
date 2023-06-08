@@ -73,6 +73,7 @@ def main():
 def create_argparser():
     defaults = dict(
         data_dir="",
+        dataset="",
         log_dir="", 
         log_name="",
         schedule_sampler="uniform",
