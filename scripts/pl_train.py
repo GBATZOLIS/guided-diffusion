@@ -38,7 +38,6 @@ def main():
     else:
         datamodule = ImageDataModule(data_dir=args.data_dir,
                                      dataset=args.dataset,
-                                     percentage_use = 100,
                                      batch_size=args.batch_size,
                                      image_size=args.image_size,
                                      class_cond=args.class_cond,
