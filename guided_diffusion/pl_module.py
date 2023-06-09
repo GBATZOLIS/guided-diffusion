@@ -48,7 +48,11 @@ class BaseModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
-        x = batch
+        if type(batch) == list:
+            x = batch[0]
+        else:
+            x = batch
+            
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
