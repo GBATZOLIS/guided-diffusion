@@ -102,8 +102,9 @@ class EMA(Callback):
         checkpoint_callback = trainer.checkpoint_callback
 
         # use the connector as NeMo calls the connector directly in the exp_manager when restoring.
-        connector = trainer._checkpoint_connector
-        ckpt_path = connector.resume_checkpoint_path
+        #connector = trainer._checkpoint_connector
+        #ckpt_path = connector.resume_checkpoint_path
+        ckpt_path = checkpoint
 
         if ckpt_path and checkpoint_callback is not None and 'NeMo' in type(checkpoint_callback).__name__:
             ext = checkpoint_callback.FILE_EXTENSION
