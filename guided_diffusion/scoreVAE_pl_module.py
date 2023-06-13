@@ -71,11 +71,17 @@ class ScoreVAE(pl.LightningModule):
         #self.diffusion_model.convert_to_fp16()
         #self.diffusion_model.dtype = torch.float16
         
+    def _handle_batch(self, batch):
+        if type(batch) == list:
+            x, cond = batch
+        else:
+            x, cond = batch, {}
+        return x, cond
 
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
-        x, cond = batch
+        x, cond = self._handle_batch(batch)
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
@@ -103,7 +109,7 @@ class ScoreVAE(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
-        x, cond = batch
+        x, cond = self._handle_batch(batch)
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
@@ -291,9 +297,10 @@ class ScoreVAESampleLoggingCallback(Callback):
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
             batch = next(iter(dataloader))
+            x, cond = pl_module._handle_batch(batch)
 
             # Generate sample using the encode and reconstruct methods
-            input_samples = batch[0].to(pl_module.device)
+            input_samples = x.to(pl_module.device)
             z = pl_module.encode(input_samples)
             reconstructed_samples = pl_module.reconstruct(z, time_respacing='ddim250')
 
@@ -304,6 +311,10 @@ class ScoreVAESampleLoggingCallback(Callback):
             pl_module.log('LPIPS', avg_lpips_score.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
             # Log the generated samples
+            difference = (reconstructed_samples - input_samples).detach().cpu()
+            difference_grid = torchvision.utils.make_grid(difference, normalize=True, scale_each=True)
+            pl_module.logger.experiment.add_image('difference', difference_grid, pl_module.current_epoch)
+            
             pl_module.log_sample(input_samples, name='input_samples')
             pl_module.log_sample(reconstructed_samples, name='reconstructed_samples')
 
