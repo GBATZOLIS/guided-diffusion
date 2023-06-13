@@ -56,12 +56,8 @@ class ScoreVAE(pl.LightningModule):
         # Load the pretrained diffusion model
         if self.trainer.global_rank == 0:
             print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
-            self.diffusion_model.load_state_dict(
-                th.load(
-                    self.diffusion_model_checkpoint, 
-                    map_location=lambda storage, loc: storage.cuda(self.device)
-                )
-            )
+            checkpoint = torch.load(self.diffusion_model_checkpoint, map_location=self.device)
+            self.diffusion_model.load_state_dict(checkpoint['state_dict'])
 
         # Freeze the diffusion model
         for param in self.diffusion_model.parameters():
