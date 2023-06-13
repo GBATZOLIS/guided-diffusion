@@ -53,19 +53,30 @@ class ScoreVAE(pl.LightningModule):
         self.diffusion_model_checkpoint = args.diffusion_model_checkpoint
     
     def on_train_start(self):
-        # Load the pretrained diffusion model
-        if self.trainer.global_rank == 0:
-            print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
-            checkpoint = torch.load(self.diffusion_model_checkpoint, map_location=self.device)
-            self.diffusion_model.load_state_dict(checkpoint['state_dict'])
+    # Load the pretrained diffusion model
+    if self.trainer.global_rank == 0:
+        print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
+        
+        # load the whole checkpoint
+        checkpoint = torch.load(self.diffusion_model_checkpoint, map_location=self.device)
+        
+        # Create a new state_dict with corrected key names if necessary
+        if any(k.startswith("diffusion_model.") for k in checkpoint['state_dict'].keys()):
+            corrected_state_dict = {k.replace("diffusion_model.", ""): v for k, v in checkpoint['state_dict'].items()}
+        else:
+            corrected_state_dict = checkpoint['state_dict']
 
-        # Freeze the diffusion model
-        for param in self.diffusion_model.parameters():
-            param.requires_grad = False
+        # Load only the diffusion_model parameters
+        self.diffusion_model.load_state_dict(corrected_state_dict)
 
-        # Convert the diffusion model to FP16
-        #self.diffusion_model.convert_to_fp16()
-        #self.diffusion_model.dtype = torch.float16
+    # Freeze the diffusion model
+    for param in self.diffusion_model.parameters():
+        param.requires_grad = False
+
+    # Convert the diffusion model to FP16
+    #self.diffusion_model.convert_to_fp16()
+    #self.diffusion_model.dtype = torch.float16
+
         
     def _handle_batch(self, batch):
         if type(batch) == list:
