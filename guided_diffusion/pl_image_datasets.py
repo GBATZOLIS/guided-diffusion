@@ -54,13 +54,13 @@ class Cifar10DataModule(pl.LightningDataModule):
         self.test_data = CIFAR10Dataset(self.args, train=False)
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True) 
+        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True, pin_memory=True) 
   
     def val_dataloader(self):
-        return DataLoader(self.valid_data, batch_size = self.val_batch, num_workers=self.val_workers, shuffle=False) 
+        return DataLoader(self.valid_data, batch_size = self.val_batch, num_workers=self.val_workers, shuffle=False, pin_memory=True) 
   
     def test_dataloader(self): 
-        return DataLoader(self.test_data, batch_size = self.test_batch, num_workers=self.test_workers, shuffle=False) 
+        return DataLoader(self.test_data, batch_size = self.test_batch, num_workers=self.test_workers, shuffle=False, pin_memory=True) 
 
 
 # ... existing functions and classes (load_data, ImageDataset, etc.) ...
@@ -130,6 +130,7 @@ class ImageDataModule(LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
+            pin_memory=True,
             drop_last=True,
         )
 
@@ -139,6 +140,7 @@ class ImageDataModule(LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
+            pin_memory=True,
             drop_last=True,
         )
 
@@ -148,6 +150,7 @@ class ImageDataModule(LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
+            pin_memory=True,
             drop_last=True,
         )
 
