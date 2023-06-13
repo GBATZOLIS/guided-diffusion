@@ -45,13 +45,18 @@ class BaseModule(pl.LightningModule):
         
         self.schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, self.diffusion)
 
-    def training_step(self, batch, batch_idx):
-        # training_step defined the train loop.
-        # It is independent of forward
+    def _handle_batch(self, batch):
         if type(batch) == list:
             x = batch[0]
         else:
             x = batch
+        return x
+
+    def training_step(self, batch, batch_idx):
+        # training_step defined the train loop.
+        # It is independent of forward
+        
+        x = self._handle_batch(batch)
             
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
@@ -77,7 +82,7 @@ class BaseModule(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
-        x = batch
+        x = self._handle_batch(batch)
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
