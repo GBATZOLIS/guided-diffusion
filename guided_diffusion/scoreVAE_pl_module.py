@@ -45,7 +45,6 @@ class ScoreVAE(pl.LightningModule):
         self.diffusion_model, self.diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
         )
-        
 
         self.schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, self.diffusion)
 
@@ -185,9 +184,15 @@ class ScoreVAE(pl.LightningModule):
         cond_kwargs={}
         cond_kwargs['z'] = z
 
-        diffusion_dict = args_to_dict(self.args, diffusion_defaults().keys())
-        diffusion_dict['timestep_respacing'] = time_respacing
-        sampling_diffusion = create_gaussian_diffusion(**diffusion_dict)
+        sampling_diffusion = create_gaussian_diffusion(
+                                    steps=self.args.diffusion_steps,
+                                    learn_sigma=self.args.learn_sigma,
+                                    noise_schedule=self.args.noise_schedule,
+                                    use_kl=self.args.use_kl,
+                                    predict_xstart=self.args.predict_xstart,
+                                    rescale_timesteps=self.args.rescale_timesteps,
+                                    rescale_learned_sigmas=self.args.rescale_learned_sigmas,
+                                    timestep_respacing=time_respacing)
 
         sample_fn = (
             sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
@@ -209,9 +214,15 @@ class ScoreVAE(pl.LightningModule):
         if not num_samples:
             num_samples = self.args.batch_size
         
-        diffusion_dict = args_to_dict(self.args, diffusion_defaults().keys())
-        diffusion_dict['timestep_respacing'] = time_respacing
-        sampling_diffusion = create_gaussian_diffusion(**diffusion_dict)
+        sampling_diffusion = create_gaussian_diffusion(
+                                    steps=self.args.diffusion_steps,
+                                    learn_sigma=self.args.learn_sigma,
+                                    noise_schedule=self.args.noise_schedule,
+                                    use_kl=self.args.use_kl,
+                                    predict_xstart=self.args.predict_xstart,
+                                    rescale_timesteps=self.args.rescale_timesteps,
+                                    rescale_learned_sigmas=self.args.rescale_learned_sigmas,
+                                    timestep_respacing=time_respacing)
 
         sample_fn = (
             sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
