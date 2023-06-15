@@ -177,8 +177,8 @@ class ScoreVAE(pl.LightningModule):
         return z
     
     def reconstruct(self, z, time_respacing=""):
-        def get_encoder_correction_fn(encoder_):
-            encoder = copy.deepcopy(encoder_)
+        def get_encoder_correction_fn(frozen_encoder):
+            encoder = copy.deepcopy(frozen_encoder)
             for param in encoder.parameters():
                 param.requires_grad = True
 
@@ -198,14 +198,17 @@ class ScoreVAE(pl.LightningModule):
                 th.set_grad_enabled(True)
                 x = x_t.detach()
                 x.requires_grad_()
-                #t = t.float().requires_grad_(True)  #new 
-                #z = z.requires_grad_(True)  #new 
+                
+                t = t.float().requires_grad_(True)  #new 
+                z = z.requires_grad_(True)  #new 
+
                 log_density_fn = get_log_density_fn(encoder)
                 device = x.device
                 ftx = log_density_fn(x, z, t)
+                
                 # Check requires_grad and grad_fn
-                #for var_name, tensor in [('x', x), ('t', t), ('z', z), ('ftx', ftx)]:
-                #    print(f"{var_name} requires_grad: {tensor.requires_grad}, grad_fn: {tensor.grad_fn}")
+                for var_name, tensor in [('x', x), ('t', t), ('z', z), ('ftx', ftx)]:
+                    print(f"{var_name} requires_grad: {tensor.requires_grad}, grad_fn: {tensor.grad_fn}")
                 
                 grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
                                       grad_outputs=th.ones(ftx.size()).to(device),
