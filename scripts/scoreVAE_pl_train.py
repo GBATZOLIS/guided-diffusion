@@ -129,7 +129,7 @@ def create_argparser():
         encoder_pool = "attention",
 
         #sampling settings
-        clip_denoised=True,
+        clip_denoised=False,
         use_ddim=True
     )
     defaults.update(model_and_diffusion_defaults())
