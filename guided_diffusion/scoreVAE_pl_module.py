@@ -177,7 +177,11 @@ class ScoreVAE(pl.LightningModule):
         return z
     
     def reconstruct(self, z, time_respacing=""):
-        def get_encoder_correction_fn(encoder):
+        def get_encoder_correction_fn(encoder_):
+            encoder = copy.deepcopy(encoder_)
+            for param in encoder.parameters():
+                param.requires_grad = True
+
             def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
                     latent_distribution_parameters = encoder(x, t)
