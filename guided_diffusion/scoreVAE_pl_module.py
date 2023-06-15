@@ -146,7 +146,7 @@ class ScoreVAE(pl.LightningModule):
         # It is independent of forward
         x, cond = self._handle_batch(batch)
         z = self.encode(x)
-        reconstructed_samples = self.reconstruct(z, time_respacing='250')
+        reconstructed_samples = self.reconstruct(z, time_respacing='')
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(self.device), x.to(self.device)))
 
         self.log_sample(x, name='input_samples')
@@ -223,12 +223,10 @@ class ScoreVAE(pl.LightningModule):
                                     rescale_timesteps=self.args.rescale_timesteps,
                                     rescale_learned_sigmas=self.args.rescale_learned_sigmas,
                                     timestep_respacing=time_respacing)
-        '''
+        
         sample_fn = (
             sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
         )
-        '''
-        sample_fn = sampling_diffusion.ddim_sample_loop
         
         sample = sample_fn(
             self.diffusion_model,
