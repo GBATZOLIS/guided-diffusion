@@ -182,7 +182,7 @@ class ScoreVAE(pl.LightningModule):
             def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
                     latent_distribution_parameters = encoder(x, t)
-                    print(latent_distribution_parameters.requires_grad)
+                    #print(latent_distribution_parameters.requires_grad)
                     latent_dim = latent_distribution_parameters.size(1)//2
                     mean_z = latent_distribution_parameters[:, :latent_dim]
                     log_var_z = latent_distribution_parameters[:, latent_dim:]
