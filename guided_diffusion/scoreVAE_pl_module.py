@@ -142,12 +142,11 @@ class ScoreVAE(pl.LightningModule):
         return loss
     
     def test_step(self, batch, batch_idx):
-        self.train()
         # training_step defined the train loop.
         # It is independent of forward
         x, cond = self._handle_batch(batch)
         z = self.encode(x)
-        reconstructed_samples = self.reconstruct(z, time_respacing='')
+        reconstructed_samples = self.reconstruct(z, time_respacing='ddim250')
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(self.device), x.to(self.device)))
 
         self.log_sample(x, name='input_samples')
@@ -197,16 +196,16 @@ class ScoreVAE(pl.LightningModule):
                 x = x_t.detach()
                 x.requires_grad_()
                 
-                t = t.float().requires_grad_(True)  #new 
-                z = z.requires_grad_(True)  #new 
+                #t = t.float().requires_grad_(True)  #new 
+                #z = z.requires_grad_(True)  #new 
 
                 log_density_fn = get_log_density_fn(encoder)
                 device = x.device
                 ftx = log_density_fn(x, z, t)
                 
                 # Check requires_grad and grad_fn
-                for var_name, tensor in [('x', x), ('t', t), ('z', z), ('ftx', ftx)]:
-                    print(f"{var_name} requires_grad: {tensor.requires_grad}, grad_fn: {tensor.grad_fn}")
+                #for var_name, tensor in [('x', x), ('t', t), ('z', z), ('ftx', ftx)]:
+                #    print(f"{var_name} requires_grad: {tensor.requires_grad}, grad_fn: {tensor.grad_fn}")
                 
                 grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
                                       grad_outputs=th.ones(ftx.size()).to(device),
@@ -354,7 +353,7 @@ class ScoreVAESampleLoggingCallback(Callback):
             diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250')
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
-        if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 5 ==0:
+        if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 1 ==0:
             
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
