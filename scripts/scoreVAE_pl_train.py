@@ -73,9 +73,9 @@ def main():
     elif args.phase == 'test':
         logger = pl.loggers.TensorBoardLogger(os.path.join(args.log_dir, 'test'), name='', version=args.log_name)
         callbacks = [ScoreVAETestSetupCallback()]
-        trainer = pl.Trainer(accelerator = 'cpu',
+        trainer = pl.Trainer(accelerator = 'gpu',
                             #strategy='ddp_find_unused_parameters_true',
-                            devices=1,
+                            devices=args.gpus,
                             num_nodes = args.num_nodes,
                             accumulate_grad_batches = args.accumulate_grad_batches,
                             gradient_clip_val = args.grad_clip,
