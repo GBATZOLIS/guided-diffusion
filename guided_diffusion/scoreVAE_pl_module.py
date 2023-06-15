@@ -140,6 +140,30 @@ class ScoreVAE(pl.LightningModule):
 
 
         return loss
+    
+    def test_step(self, batch, batch_idx):
+        # training_step defined the train loop.
+        # It is independent of forward
+        x, cond = self._handle_batch(batch)
+        z = self.encode(x)
+        reconstructed_samples = self.reconstruct(z, time_respacing='ddim250')
+        avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(self.device), x.to(self.device)))
+
+        self.log_sample(x, name='input_samples')
+        self.log_sample(reconstructed_samples, name='reconstructed_samples')
+
+        difference = torch.flatten(reconstructed_samples, start_dim=1) - torch.flatten(x, start_dim=1)
+        L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+        avg_L2norm = torch.mean(L2norm)
+
+        # Logging LPIPS score
+        self.log('LPIPS', avg_lpips_score, on_step=True, on_epoch=True, prog_bar=True)
+
+        # Logging L2 norm
+        self.log('L2', avg_L2norm, on_step=True, on_epoch=True, prog_bar=True)
+    
+        # Return metrics
+        return {'LPIPS': avg_lpips_score, 'L2': avg_L2norm}
 
     def encode(self, x):
         #compute the parameters of the encoding distribution p_φ(z|x_t)
@@ -193,10 +217,12 @@ class ScoreVAE(pl.LightningModule):
                                     rescale_timesteps=self.args.rescale_timesteps,
                                     rescale_learned_sigmas=self.args.rescale_learned_sigmas,
                                     timestep_respacing=time_respacing)
-
+        '''
         sample_fn = (
             sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
         )
+        '''
+        sample_fn = sampling_diffusion.ddim_sample_loop
         
         sample = sample_fn(
             self.diffusion_model,
@@ -296,6 +322,14 @@ class LoadAndFreezeModelCallback(Callback):
         for param in pl_module.diffusion_model.parameters():
             param.requires_grad = False
 '''
+
+class ScoreVAETestSetupCallback(Callback):
+    def __init__(self):
+        super().__init__()
+        self.lpips_distance_fn = lpips.LPIPS(net='vgg')
+
+    def setup(self, trainer, pl_module, stage):
+        self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
 class ScoreVAESampleLoggingCallback(Callback):
     def __init__(self):

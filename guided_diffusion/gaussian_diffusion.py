@@ -547,6 +547,7 @@ class GaussianDiffusion:
         clip_denoised=True,
         denoised_fn=None,
         cond_fn=None,
+        cond_kwargs=None,
         model_kwargs=None,
         eta=0.0,
     ):
@@ -564,7 +565,7 @@ class GaussianDiffusion:
             model_kwargs=model_kwargs,
         )
         if cond_fn is not None:
-            out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
+            out = self.condition_score(cond_fn, out, x, t, model_kwargs=cond_kwargs)
 
         # Usually our model outputs epsilon, but we re-derive it
         # in case we used x_start or x_prev prediction.
@@ -635,6 +636,7 @@ class GaussianDiffusion:
         clip_denoised=True,
         denoised_fn=None,
         cond_fn=None,
+        cond_kwargs=None,
         model_kwargs=None,
         device=None,
         progress=False,
@@ -653,6 +655,7 @@ class GaussianDiffusion:
             clip_denoised=clip_denoised,
             denoised_fn=denoised_fn,
             cond_fn=cond_fn,
+            cond_kwargs=cond_kwargs,
             model_kwargs=model_kwargs,
             device=device,
             progress=progress,
@@ -705,6 +708,7 @@ class GaussianDiffusion:
                     clip_denoised=clip_denoised,
                     denoised_fn=denoised_fn,
                     cond_fn=cond_fn,
+                    cond_kwargs=cond_kwargs,
                     model_kwargs=model_kwargs,
                     eta=eta,
                 )
