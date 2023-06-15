@@ -51,7 +51,7 @@ def main():
     if args.phase == 'train':
         logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
         callbacks = [EMA(decay=float(args.ema_rate)), ScoreVAESampleLoggingCallback()]
-        trainer = pl.Trainer( accelerator = 'gpu',
+        trainer = pl.Trainer( accelerator = 'cpu',
                             #strategy='ddp_find_unused_parameters_true',
                             devices=args.gpus,
                             num_nodes = args.num_nodes,
