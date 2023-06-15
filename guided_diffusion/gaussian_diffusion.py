@@ -822,11 +822,11 @@ class GaussianDiffusion:
         terms["mse"] = mean_flat((target - corrected_eps) ** 2) #reconstruction term
 
         #compute the KL penalty term: terms['kl-penalty']
-        kl_loss = -0.5 * th.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1)
-        terms["kl-penalty"] = kl_loss
+        #kl_loss = -0.5 * th.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1)
+        #terms["kl-penalty"] = kl_loss
 
         #compute the weighted loss
-        terms['loss'] = terms["mse"] + beta * terms["kl-penalty"]
+        terms['loss'] = terms["mse"] #+ beta * terms["kl-penalty"]
 
         return terms
 
