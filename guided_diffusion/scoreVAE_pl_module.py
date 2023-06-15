@@ -193,7 +193,7 @@ class ScoreVAE(pl.LightningModule):
                 th.set_grad_enabled(True)
                 x = x_t.detach()
                 x.requires_grad_()
-                t = t.requires_grad_(True)  #new 
+                t = t.float().requires_grad_(True)  #new 
                 log_density_fn = get_log_density_fn(encoder)
                 device = x.device
                 ftx = log_density_fn(x, z, t)
