@@ -142,6 +142,7 @@ class ScoreVAE(pl.LightningModule):
         return loss
     
     def test_step(self, batch, batch_idx):
+        self.train()
         # training_step defined the train loop.
         # It is independent of forward
         x, cond = self._handle_batch(batch)
@@ -178,7 +179,6 @@ class ScoreVAE(pl.LightningModule):
     
     def reconstruct(self, z, time_respacing=""):
         def get_encoder_correction_fn(encoder):
-            encoder.train()
             
             def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
