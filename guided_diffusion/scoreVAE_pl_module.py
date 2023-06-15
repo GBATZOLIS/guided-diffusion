@@ -146,7 +146,7 @@ class ScoreVAE(pl.LightningModule):
         # It is independent of forward
         x, cond = self._handle_batch(batch)
         z = self.encode(x)
-        reconstructed_samples = self.reconstruct(z, time_respacing='ddim250')
+        reconstructed_samples = self.reconstruct(z, time_respacing='250')
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(self.device), x.to(self.device)))
 
         self.log_sample(x, name='input_samples')
@@ -193,9 +193,8 @@ class ScoreVAE(pl.LightningModule):
                 th.set_grad_enabled(True)
                 x = x_t.detach()
                 x.requires_grad_()
-                t = t.float().requires_grad_(True)  #new 
-                z = z.requires_grad_(True)  #new 
-                encoder.train()
+                #t = t.float().requires_grad_(True)  #new 
+                #z = z.requires_grad_(True)  #new 
                 log_density_fn = get_log_density_fn(encoder)
                 device = x.device
                 ftx = log_density_fn(x, z, t)
@@ -205,7 +204,6 @@ class ScoreVAE(pl.LightningModule):
                 grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
                                       grad_outputs=th.ones(ftx.size()).to(device),
                                       create_graph=True, retain_graph=True, only_inputs=True)[0]
-                encoder.eval()
                 th.set_grad_enabled(False)
                 return grad_log_density
 
@@ -229,7 +227,7 @@ class ScoreVAE(pl.LightningModule):
             sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
         )
         '''
-        sample_fn = sampling_diffusion.ddim_sample_loop
+        sample_fn = sampling_diffusion.p_sample_loop
         
         sample = sample_fn(
             self.diffusion_model,
