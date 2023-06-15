@@ -196,6 +196,9 @@ class ScoreVAE(pl.LightningModule):
                 log_density_fn = get_log_density_fn(encoder)
                 device = x.device
                 ftx = log_density_fn(x, z, t)
+                # Check requires_grad and grad_fn
+                for var_name, tensor in [('x', x), ('t', t), ('z', z), ('ftx', ftx)]:
+                    print(f"{var_name} requires_grad: {tensor.requires_grad}, grad_fn: {tensor.grad_fn}")
                 grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
                                       grad_outputs=th.ones(ftx.size()).to(device),
                                       create_graph=True, retain_graph=True, only_inputs=True)[0]
