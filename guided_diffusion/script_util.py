@@ -81,7 +81,9 @@ def encoder_defaults():
                 encoder_attention_resolutions = "32,16,8",
                 encoder_use_scale_shift_norm = True,
                 encoder_resblock_updown = True,
-                encoder_pool = "attention")
+                encoder_pool = "attention",
+                encoder_type = 'HalfUnet'
+                )
     return res
     
 
