@@ -51,7 +51,7 @@ def main():
     if args.phase == 'train':
         logger = pl.loggers.TensorBoardLogger(args.log_dir, name='', version=args.log_name)
         callbacks = [EMA(decay=float(args.ema_rate)), ScoreVAESampleLoggingCallback()]
-        trainer = pl.Trainer( accelerator = 'gpu',
+        trainer = pl.Trainer(accelerator = args.accelerator,
                             #strategy='ddp_find_unused_parameters_true',
                             devices=args.gpus,
                             num_nodes = args.num_nodes,
@@ -73,7 +73,7 @@ def main():
     elif args.phase == 'test':
         logger = pl.loggers.TensorBoardLogger(os.path.join(args.log_dir, 'test'), name='', version=args.log_name)
         callbacks = [ScoreVAETestSetupCallback()]
-        trainer = pl.Trainer(accelerator = 'gpu',
+        trainer = pl.Trainer(accelerator = args.accelerator,
                             #strategy='ddp_find_unused_parameters_true',
                             devices=args.gpus,
                             num_nodes = args.num_nodes,
@@ -102,7 +102,7 @@ def create_argparser():
         lr_anneal_steps=0,
         gpus=1, #new
         num_nodes=1, #new
-        accelerator = None, #new
+        accelerator = 'gpu', #new
         workers = 4, #new
         accumulate_grad_batches=1, #new
         grad_clip = 0., #new 
