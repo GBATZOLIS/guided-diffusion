@@ -353,7 +353,7 @@ class ScoreVAESampleLoggingCallback(Callback):
             diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250')
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
-        if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 5 ==0:
+        if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 10 ==0:
             
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()

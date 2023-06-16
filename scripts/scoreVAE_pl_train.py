@@ -127,6 +127,7 @@ def create_argparser():
         encoder_use_scale_shift_norm = True,
         encoder_resblock_updown = True,
         encoder_pool = "attention",
+        encoder_type = 'HalfUnet',
 
         #sampling settings
         clip_denoised=False,
