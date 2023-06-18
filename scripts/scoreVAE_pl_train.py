@@ -83,7 +83,7 @@ def main():
                             max_epochs=args.epochs_limit,
                             callbacks=callbacks, 
                             logger = logger,
-                            num_sanity_val_steps=0
+                            num_sanity_val_steps=1
                             )
 
         pl_model = ScoreVAE(args)
