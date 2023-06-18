@@ -99,6 +99,7 @@ class ScoreVAE(pl.LightningModule):
                 x,
                 t,
                 model_kwargs=cond,
+                clip_denoised=True,
                 train=True
             )
 
@@ -132,6 +133,7 @@ class ScoreVAE(pl.LightningModule):
                 x,
                 t,
                 model_kwargs=cond,
+                clip_denoised=True,
                 train=False
             )
 
@@ -283,7 +285,7 @@ class ScoreVAE(pl.LightningModule):
         sample = sample_fn(
             self.diffusion_model,
             (num_samples, 3, self.args.image_size, self.args.image_size),
-            clip_denoised=True,
+            clip_denoised=self.args.clip_denoised,
             device=self.device, 
             progress=True
             )
@@ -366,13 +368,13 @@ class ScoreVAESampleLoggingCallback(Callback):
         self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if trainer.current_epoch in [0, 5]:
+        if trainer.current_epoch in [1, 25]:
             #ddim works properly
             #diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250', sampling_scheme='ddim')
             #pl_module.log_sample(diffusion_samples, name='diffusion_samples_ddim')
 
             diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='250', sampling_scheme='psample')
-            pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample')
+            pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample_epoch_%d' % trainer.current_epoch)
 
         if (trainer.current_epoch+1) % 10 ==0:
             

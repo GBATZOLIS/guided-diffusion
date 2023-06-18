@@ -131,7 +131,8 @@ def create_argparser():
         encoder_type = 'HalfUnet',
 
         #sampling settings
-        clip_denoised=False,
+        #CLIP_DENOISED IS AN IMPORTANT SETTING. IT MUST BE SET TO TRUE.
+        clip_denoised=True, #THIS MUST BE TRUE IF YOU USE PSAMPLE - OTHERWISE THE SAMPLES ARE OUT OF DISTRIBUTION
         use_ddim=False
     )
     defaults.update(model_and_diffusion_defaults())

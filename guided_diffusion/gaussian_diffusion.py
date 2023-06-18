@@ -751,7 +751,7 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
     
-    def compatible_scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True, beta = 0.01):
+    def compatible_scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, clip_denoised=True, noise=None, train=True, beta = 0.01):
         def get_encoder_correction_fn(encoder):
             def get_log_density_fn(encoder):
                 def log_density_fn(x, t, z):
@@ -803,7 +803,7 @@ class GaussianDiffusion:
         x_t = self.q_sample(x_start, t, noise=noise)
 
         out = self.p_mean_variance(
-            diffusion_model, x_t, t, clip_denoised=False, model_kwargs=model_kwargs
+            diffusion_model, x_t, t, clip_denoised=clip_denoised, model_kwargs=model_kwargs
         )
 
         #update the mean prediction using the latent information
