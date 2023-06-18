@@ -257,7 +257,7 @@ class ScoreVAE(pl.LightningModule):
 
         return sample #expected range [-1, 1] for images (depends on the preprocessed values)
 
-    def sample_from_diffusion_model(self, num_samples=None, time_respacing=""):
+    def sample_from_diffusion_model(self, num_samples=None, time_respacing="", sampling_scheme='default'):
         if not num_samples:
             num_samples = self.args.batch_size
         
@@ -271,9 +271,14 @@ class ScoreVAE(pl.LightningModule):
                                     rescale_learned_sigmas=self.args.rescale_learned_sigmas,
                                     timestep_respacing=time_respacing)
 
-        sample_fn = (
-            sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
-        )
+        if sampling_scheme == 'default':
+            sample_fn = (
+                sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
+            )
+        elif sampling_scheme == 'ddim':
+            sample_fn = sampling_diffusion.ddim_sample_loop
+        elif sampling_scheme == 'psample':
+            sample_fn = sampling_diffusion.p_sample_loop
         
         sample = sample_fn(
             self.diffusion_model,
@@ -361,11 +366,14 @@ class ScoreVAESampleLoggingCallback(Callback):
         self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if trainer.current_epoch == 2:
-            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='250')
-            pl_module.log_sample(diffusion_samples, name='diffusion_samples')
+        if trainer.current_epoch in [0, 2]:
+            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250', sampling_scheme='ddim')
+            pl_module.log_sample(diffusion_samples, name='diffusion_samples_ddim')
 
-        if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 10 ==0:
+            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='250', sampling_scheme='psample')
+            pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample')
+
+        if (trainer.current_epoch+1) % 10 ==0:
             
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
