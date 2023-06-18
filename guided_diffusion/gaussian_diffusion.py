@@ -750,8 +750,100 @@ class GaussianDiffusion:
         # otherwise return KL(q(x_{t-1}|x_t,x_0) || p(x_{t-1}|x_t))
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
+    
+    def compatible_scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True, beta = 0.01):
+        def get_encoder_correction_fn(encoder):
+            def get_log_density_fn(encoder):
+                def log_density_fn(x, t, z):
+                    latent_distribution_parameters = encoder(x, t)
+                    latent_dim = latent_distribution_parameters.size(1)//2
+                    mean_z = latent_distribution_parameters[:, :latent_dim]
+                    log_var_z = latent_distribution_parameters[:, latent_dim:]
+                    logdensity = -1/2*th.sum(th.square(z - mean_z)/log_var_z.exp(), dim=1)
+                    return logdensity
+                
+                return log_density_fn
 
-    def scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True, beta = 1e-2):
+            def encoder_correction_fn(x_t, t, z):
+                if not train: 
+                    th.set_grad_enabled(True)
+                  
+                x = x_t.detach()
+                x.requires_grad_()
+
+                log_density_fn = get_log_density_fn(encoder)
+                device = x.device
+                  
+                ftx = log_density_fn(x, t, z)
+                grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=th.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+
+                if not train:
+                    th.set_grad_enabled(False)
+
+                return grad_log_density
+
+            return encoder_correction_fn
+
+        encoder_correction_fn = get_encoder_correction_fn(encoder)
+        terms = {} #initialise the terms dictionary that stores the loss values
+
+        #compute the parameters of the encoding distribution p_φ(z|x_t)
+        latent_distribution_parameters = encoder(x_start, th.zeros_like(t))
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_z = latent_distribution_parameters[:, :latent_dim]
+        log_var_z = latent_distribution_parameters[:, latent_dim:]
+
+        #sample the latent factor z
+        z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z) 
+
+        #sample x_t from the perturbation kernel
+        noise = th.randn_like(x_start)
+        x_t = self.q_sample(x_start, t, noise=noise)
+
+        out = self.p_mean_variance(
+            diffusion_model, x_t, t, clip_denoised=False, model_kwargs=model_kwargs
+        )
+
+        #update the mean prediction using the latent information
+        cond_kwargs = {'z' : z}
+        out["mean"] = self.condition_mean(
+                encoder_correction_fn, out, x_t, t, model_kwargs=cond_kwargs
+            )
+        
+
+        true_mean, _, true_log_variance_clipped = self.q_posterior_mean_variance(
+            x_start=x_start, x_t=x_t, t=t
+        )
+
+        kl = normal_kl(
+            true_mean, true_log_variance_clipped, out["mean"], out["log_variance"]
+        )
+
+        kl = mean_flat(kl)
+
+        decoder_nll = -discretized_gaussian_log_likelihood(
+            x_start, means=out["mean"], log_scales=0.5 * out["log_variance"]
+        )
+
+        assert decoder_nll.shape == x_start.shape
+        decoder_nll = mean_flat(decoder_nll)
+
+        output = th.where((t == 0), decoder_nll, kl)
+
+        terms['reconstruction'] = output 
+
+        #compute the KL penalty term: terms['kl-penalty']
+        kl_loss = -0.5 * th.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1) #mean over non batch dims
+        terms["kl-penalty"] = kl_loss
+
+        #compute the weighted loss
+        #terms['loss'] = terms["mse"] + beta * terms["kl-penalty"]
+        return terms
+
+
+    def scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True, beta = 0.01):
         #Compute scoreVAE training loss
         #we assume that the diffusion model predicts the noise (noise predictor -> epsilon)
         def get_encoder_correction_fn(encoder):
@@ -819,14 +911,14 @@ class GaussianDiffusion:
         corrected_eps = epsilon + epsilon_correction
 
         target = noise
-        terms["mse"] = mean_flat((target - corrected_eps) ** 2) #reconstruction term
+        terms["mse"] = mean_flat((target - corrected_eps) ** 2) #reconstruction term -> mean over all non batch dimensions
 
         #compute the KL penalty term: terms['kl-penalty']
-        #kl_loss = -0.5 * th.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1)
-        #terms["kl-penalty"] = kl_loss
+        kl_loss = -0.5 * th.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1) #mean over non batch dims
+        terms["kl-penalty"] = kl_loss
 
         #compute the weighted loss
-        terms['loss'] = terms["mse"] #+ beta * terms["kl-penalty"]
+        terms['loss'] = terms["mse"] + beta * terms["kl-penalty"]
 
         return terms
 

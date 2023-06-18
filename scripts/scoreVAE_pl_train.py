@@ -119,6 +119,7 @@ def create_argparser():
         
         ### ScoreVAE settings #new
         diffusion_model_checkpoint="",
+        beta=0.01,
         latent_dim = 1024, 
         encoder_use_fp16 = False,
         encoder_width = 128,
@@ -131,7 +132,7 @@ def create_argparser():
 
         #sampling settings
         clip_denoised=False,
-        use_ddim=True
+        use_ddim=False
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

@@ -50,6 +50,8 @@ class ScoreVAE(pl.LightningModule):
 
         # store the diffusion model checkpoint path
         self.diffusion_model_checkpoint = args.diffusion_model_checkpoint
+
+        self.beta = args.beta
     
     def on_train_start(self):
         # Load the pretrained diffusion model
@@ -91,7 +93,7 @@ class ScoreVAE(pl.LightningModule):
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
-                self.diffusion.scoreVAE_training_losses,
+                self.diffusion.compatible_scoreVAE_training_losses,
                 self.encoder,
                 self.diffusion_model,
                 x,
@@ -103,10 +105,15 @@ class ScoreVAE(pl.LightningModule):
         losses = compute_losses()
         if isinstance(self.schedule_sampler, LossAwareSampler):
                 self.schedule_sampler.update_with_local_losses(
-                    t, losses["loss"].detach()
+                    t, losses["reconstruction"].detach()
                 )
 
-        loss = (losses["loss"] * weights).mean()
+        # we allow for importance sampling weighting only in the reconstruction term 
+        # since it does not make sense to use it for the kl penalty term
+        reconstruction_loss = (losses["reconstruction"] * weights).mean() 
+        kl_penalty_loss = losses["kl-penalty"].mean()
+        loss = reconstruction_loss + self.beta * kl_penalty_loss
+
         self.log('train_loss', loss, prog_bar=True, sync_dist=True)
         self.log_loss_dict(self.diffusion, t, {k: v * weights for k, v in losses.items()})
 
@@ -119,7 +126,7 @@ class ScoreVAE(pl.LightningModule):
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
-                self.diffusion.scoreVAE_training_losses,
+                self.diffusion.compatible_scoreVAE_training_losses,
                 self.encoder,
                 self.diffusion_model,
                 x,
@@ -131,10 +138,15 @@ class ScoreVAE(pl.LightningModule):
         losses = compute_losses()
         if isinstance(self.schedule_sampler, LossAwareSampler):
                 self.schedule_sampler.update_with_local_losses(
-                    t, losses["loss"].detach()
+                    t, losses["reconstruction"].detach()
                 )
 
-        loss = (losses["loss"] * weights).mean()
+        # we allow for importance sampling weighting only in the reconstruction term 
+        # since it does not make sense to use it for the kl penalty term
+        reconstruction_loss = (losses["reconstruction"] * weights).mean() 
+        kl_penalty_loss = losses["kl-penalty"].mean()
+        loss = reconstruction_loss + self.beta * kl_penalty_loss
+
         self.log('val_loss', loss, prog_bar=True, sync_dist=True)
         #self.log_loss_dict(self.diffusion, t, {k: v * weights for k, v in losses.items()})
 
@@ -146,7 +158,7 @@ class ScoreVAE(pl.LightningModule):
         # It is independent of forward
         x, cond = self._handle_batch(batch)
         z = self.encode(x)
-        reconstructed_samples = self.reconstruct(z, time_respacing='ddim250')
+        reconstructed_samples = self.reconstruct(z, time_respacing='250')
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(self.device), x.to(self.device)))
 
         self.log_sample(x, name='input_samples')
@@ -350,7 +362,7 @@ class ScoreVAESampleLoggingCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         if trainer.current_epoch == 2:
-            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250')
+            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='250')
             pl_module.log_sample(diffusion_samples, name='diffusion_samples')
 
         if trainer.current_epoch == 0 or (trainer.current_epoch+1) % 10 ==0:
@@ -363,7 +375,7 @@ class ScoreVAESampleLoggingCallback(Callback):
             # Generate sample using the encode and reconstruct methods
             input_samples = x.to(pl_module.device)
             z = pl_module.encode(input_samples)
-            reconstructed_samples = pl_module.reconstruct(z, time_respacing='ddim250')
+            reconstructed_samples = pl_module.reconstruct(z, time_respacing='250')
 
             self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
             avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), input_samples.to(pl_module.device)))
