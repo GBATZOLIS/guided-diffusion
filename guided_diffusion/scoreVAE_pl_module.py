@@ -144,17 +144,25 @@ class ScoreVAE(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
+        print(torch.is_grad_enabled())
+        #torch.set_grad_enabled(True)
+        print(torch.is_grad_enabled())
+
+        test = torch.tensor([1.0], requires_grad=True)
+        test = test * 2
+        print(test.grad_fn)
+
         x, cond = self._handle_batch(batch)
         z = self.encode(x)
         reconstructed_samples = self.reconstruct(z, time_respacing='ddim250')
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(self.device), x.to(self.device)))
 
-        self.log_sample(x, name='input_samples')
-        self.log_sample(reconstructed_samples, name='reconstructed_samples')
-
         difference = torch.flatten(reconstructed_samples, start_dim=1) - torch.flatten(x, start_dim=1)
         L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
         avg_L2norm = torch.mean(L2norm)
+
+        self.log_sample(x, name='input_samples')
+        self.log_sample(reconstructed_samples, name='reconstructed_samples')
 
         # Logging LPIPS score
         self.log('LPIPS', avg_lpips_score, on_step=True, on_epoch=True, prog_bar=True)

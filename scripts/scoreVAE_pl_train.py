@@ -3,6 +3,7 @@ Train a diffusion model on images.
 """
 
 import argparse
+import hydra
 
 from guided_diffusion.pl_image_datasets import ImageDataModule, Cifar10DataModule
 from guided_diffusion.resample import create_named_schedule_sampler
@@ -43,8 +44,10 @@ def create_datamodule(args):
                                      num_workers=args.workers)
     return datamodule
 
-def main():
-    args = create_argparser().parse_args()
+@hydra.main(config_path='../configs', config_name="config")
+def main(config):
+    #args = create_argparser().parse_args()
+    args = config.args
 
     datamodule = create_datamodule(args)
 
@@ -83,7 +86,8 @@ def main():
                             max_epochs=args.epochs_limit,
                             callbacks=callbacks, 
                             logger = logger,
-                            num_sanity_val_steps=0
+                            num_sanity_val_steps=0,
+                            inference_mode=False
                             )
 
         pl_model = ScoreVAE(args)
