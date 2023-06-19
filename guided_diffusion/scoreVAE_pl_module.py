@@ -99,7 +99,7 @@ class ScoreVAE(pl.LightningModule):
                 x,
                 t,
                 model_kwargs=cond,
-                clip_denoised=True,
+                clip_denoised=self.args.clip_denoised,
                 train=True
             )
 
@@ -133,7 +133,7 @@ class ScoreVAE(pl.LightningModule):
                 x,
                 t,
                 model_kwargs=cond,
-                clip_denoised=True,
+                clip_denoised=self.args.clip_denoised,
                 train=False
             )
 
@@ -368,15 +368,15 @@ class ScoreVAESampleLoggingCallback(Callback):
         self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if trainer.current_epoch in [1, 25]:
+        if trainer.current_epoch in [1]:
             #ddim works properly
             #diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250', sampling_scheme='ddim')
             #pl_module.log_sample(diffusion_samples, name='diffusion_samples_ddim')
 
-            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='250', sampling_scheme='psample')
+            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='1000', sampling_scheme='psample')
             pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample_epoch_%d' % trainer.current_epoch)
 
-        if (trainer.current_epoch+1) % 10 ==0:
+        if (trainer.current_epoch+1) % 30 == 0:
             
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
@@ -386,7 +386,7 @@ class ScoreVAESampleLoggingCallback(Callback):
             # Generate sample using the encode and reconstruct methods
             input_samples = x.to(pl_module.device)
             z = pl_module.encode(input_samples)
-            reconstructed_samples = pl_module.reconstruct(z, time_respacing='250')
+            reconstructed_samples = pl_module.reconstruct(z, time_respacing='1000')
 
             self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
             avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), input_samples.to(pl_module.device)))

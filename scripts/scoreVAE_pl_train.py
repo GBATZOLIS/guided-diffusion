@@ -132,7 +132,7 @@ def create_argparser():
 
         #sampling settings
         #CLIP_DENOISED IS AN IMPORTANT SETTING. IT MUST BE SET TO TRUE.
-        clip_denoised=True, #THIS MUST BE TRUE IF YOU USE PSAMPLE - OTHERWISE THE SAMPLES ARE OUT OF DISTRIBUTION
+        clip_denoised=False, #THIS MUST BE TRUE IF YOU USE PSAMPLE - OTHERWISE THE SAMPLES ARE OUT OF DISTRIBUTION
         use_ddim=False
     )
     defaults.update(model_and_diffusion_defaults())
