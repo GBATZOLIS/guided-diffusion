@@ -99,7 +99,7 @@ class ScoreVAE(pl.LightningModule):
                 x,
                 t,
                 model_kwargs=cond,
-                clip_denoised=self.args.clip_denoised,
+                clip_denoised=False,
                 train=True
             )
 
@@ -133,7 +133,7 @@ class ScoreVAE(pl.LightningModule):
                 x,
                 t,
                 model_kwargs=cond,
-                clip_denoised=self.args.clip_denoised,
+                clip_denoised=False,
                 train=False
             )
 
@@ -191,7 +191,7 @@ class ScoreVAE(pl.LightningModule):
         z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z)
         return z
     
-    def reconstruct(self, z, time_respacing=""):
+    def reconstruct(self, z, time_respacing="", sampling_scheme='default', clip_denoised='default'):
         def get_encoder_correction_fn(encoder):
             
             def get_log_density_fn(encoder):
@@ -244,14 +244,22 @@ class ScoreVAE(pl.LightningModule):
                                     rescale_learned_sigmas=self.args.rescale_learned_sigmas,
                                     timestep_respacing=time_respacing)
         
-        sample_fn = (
-            sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
-        )
+        if sampling_scheme == 'default':
+            sample_fn = (
+                sampling_diffusion.p_sample_loop if not self.args.use_ddim else sampling_diffusion.ddim_sample_loop
+            )
+        elif sampling_scheme == 'ddim':
+            sample_fn = sampling_diffusion.ddim_sample_loop
+        elif sampling_scheme == 'psample':
+            sample_fn = sampling_diffusion.p_sample_loop
         
+        if clip_denoised == 'default':
+            clip_denoised = self.args.clip_denoised
+
         sample = sample_fn(
             self.diffusion_model,
             (z.size(0), 3, self.args.image_size, self.args.image_size),
-            clip_denoised=self.args.clip_denoised,
+            clip_denoised=clip_denoised,
             cond_fn=encoder_correction_fn,
             cond_kwargs=cond_kwargs,
             device=self.device,
@@ -260,7 +268,7 @@ class ScoreVAE(pl.LightningModule):
 
         return sample #expected range [-1, 1] for images (depends on the preprocessed values)
 
-    def sample_from_diffusion_model(self, num_samples=None, time_respacing="", sampling_scheme='default'):
+    def sample_from_diffusion_model(self, num_samples=None, time_respacing="", sampling_scheme='default', clip_denoised == 'default'):
         if not num_samples:
             num_samples = self.args.batch_size
         
@@ -283,10 +291,13 @@ class ScoreVAE(pl.LightningModule):
         elif sampling_scheme == 'psample':
             sample_fn = sampling_diffusion.p_sample_loop
         
+        if clip_denoised == 'default':
+            clip_denoised = self.args.clip_denoised
+
         sample = sample_fn(
             self.diffusion_model,
             (num_samples, 3, self.args.image_size, self.args.image_size),
-            clip_denoised=self.args.clip_denoised,
+            clip_denoised=clip_denoised,
             device=self.device, 
             progress=True
             )
@@ -369,12 +380,12 @@ class ScoreVAESampleLoggingCallback(Callback):
         self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if trainer.current_epoch in [1]:
+        if trainer.current_epoch in [110]:
             #ddim works properly
             #diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250', sampling_scheme='ddim')
             #pl_module.log_sample(diffusion_samples, name='diffusion_samples_ddim')
 
-            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='1000', sampling_scheme='psample')
+            diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='1000', sampling_scheme='psample', clip_denoised=True)
             pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample_epoch_%d' % trainer.current_epoch)
 
         if (trainer.current_epoch+1) % 30 == 0:
@@ -387,7 +398,10 @@ class ScoreVAESampleLoggingCallback(Callback):
             # Generate sample using the encode and reconstruct methods
             input_samples = x.to(pl_module.device)
             z = pl_module.encode(input_samples)
-            reconstructed_samples = pl_module.reconstruct(z, time_respacing='1000')
+            reconstructed_samples = pl_module.reconstruct(z, time_respacing='1000', sampling_scheme == 'psample', clip_denoised=True)
+
+            reconstructed_samples_ddim = pl_module.reconstruct(z, time_respacing='ddim250', sampling_scheme = 'ddim', clip_denoised=True)
+            pl_module.log_sample(reconstructed_samples_ddim, name='reconstructed_samples_ddim')
 
             self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
             avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(pl_module.device), input_samples.to(pl_module.device)))
