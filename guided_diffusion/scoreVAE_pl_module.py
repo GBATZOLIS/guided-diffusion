@@ -158,6 +158,7 @@ class ScoreVAE(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         # training_step defined the train loop.
         # It is independent of forward
+        torch.enable_grad()
         x, cond = self._handle_batch(batch)
         z = self.encode(x)
         reconstructed_samples = self.reconstruct(z, time_respacing='250')
