@@ -268,7 +268,7 @@ class ScoreVAE(pl.LightningModule):
 
         return sample #expected range [-1, 1] for images (depends on the preprocessed values)
 
-    def sample_from_diffusion_model(self, num_samples=None, time_respacing="", sampling_scheme='default', clip_denoised == 'default'):
+    def sample_from_diffusion_model(self, num_samples=None, time_respacing="", sampling_scheme='default', clip_denoised = 'default'):
         if not num_samples:
             num_samples = self.args.batch_size
         
