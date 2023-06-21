@@ -398,7 +398,7 @@ class ScoreVAESampleLoggingCallback(Callback):
             # Generate sample using the encode and reconstruct methods
             input_samples = x.to(pl_module.device)
             z = pl_module.encode(input_samples)
-            reconstructed_samples = pl_module.reconstruct(z, time_respacing='1000', sampling_scheme == 'psample', clip_denoised=True)
+            reconstructed_samples = pl_module.reconstruct(z, time_respacing='1000', sampling_scheme = 'psample', clip_denoised=True)
 
             reconstructed_samples_ddim = pl_module.reconstruct(z, time_respacing='ddim250', sampling_scheme = 'ddim', clip_denoised=True)
             pl_module.log_sample(reconstructed_samples_ddim, name='reconstructed_samples_ddim')
