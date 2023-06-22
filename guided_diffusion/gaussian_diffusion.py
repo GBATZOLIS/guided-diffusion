@@ -821,14 +821,17 @@ class GaussianDiffusion:
             true_mean, true_log_variance_clipped, out["mean"], out["log_variance"]
         )
 
-        kl = mean_flat(kl)
+        kl = th.sum(kl, dim=list(range(1, len(kl.shape))))
+        #kl = mean_flat(kl)
 
         decoder_nll = -discretized_gaussian_log_likelihood(
             x_start, means=out["mean"], log_scales=0.5 * out["log_variance"]
         )
 
         assert decoder_nll.shape == x_start.shape
-        decoder_nll = mean_flat(decoder_nll)
+
+        decoder_nll = th.sum(decoder_nll, dim=list(range(1, len(decoder_nll.shape))))
+        #decoder_nll = mean_flat(decoder_nll)
 
         output = th.where((t == 0), decoder_nll, kl)
 
