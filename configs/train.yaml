@@ -1,15 +1,16 @@
 defaults:
   - defaults
+
 args:
-  log_dir: "/store/CIA/js2164/models/gd_cifar10"
-  log_name: "encoder" 
+  home: ""
+  log_dir: "${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/"
+  log_name: "encoder_2" 
   phase: "train" 
   batch_size: 128 
   lr: 1e-4
-  beta: 1e-1
+  beta: 1e-6
                       
   lr_anneal_steps: 5000
-  data_dir: "/store/CIA/js2164/data"
   dataset: "cifar10"
   accumulate_grad_batches: 1
   grad_clip: 1
@@ -29,7 +30,7 @@ args:
                       
   use_fp16: False
   use_scale_shift_norm: True
-  diffusion_model_checkpoint: /store/CIA/js2164/models/gd_cifar10/prior/checkpoints/epoch=347-step=122496.ckpt
+  diffusion_model_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/prior/checkpoints/epoch=347-step=122496.ckpt
                       
   latent_dim: 384
   encoder_use_fp16: False

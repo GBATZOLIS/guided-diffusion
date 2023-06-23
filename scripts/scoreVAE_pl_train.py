@@ -4,6 +4,7 @@ Train a diffusion model on images.
 
 import argparse
 import hydra
+from hydra import compose, initialize
 
 from guided_diffusion.pl_image_datasets import ImageDataModule, Cifar10DataModule
 from guided_diffusion.resample import create_named_schedule_sampler
@@ -44,7 +45,9 @@ def create_datamodule(args):
                                      num_workers=args.workers)
     return datamodule
 
-@hydra.main(config_path='../configs', config_name="config")
+
+
+#@hydra.main(config_path='../configs', config_name="train")
 def main(config):
     #args = create_argparser().parse_args()
     args = config.args
@@ -147,4 +150,8 @@ def create_argparser():
 
 
 if __name__ == "__main__":
-    main()
+    initialize(version_base=None, config_path="../configs", job_name="test_app")
+    home_path = os.path.expanduser('~')
+    cfg = compose(config_name="train", overrides=[f"args.home={home_path}"])
+    #cfg = compose(config_name="train")
+    main(cfg)

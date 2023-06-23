@@ -1,7 +1,7 @@
 defaults:
   - defaults
 args:
-  log_dir: "/store/CIA/js2164/models/gd_cifar10"
+  log_dir: "~/rds_work/projects/scoreVAE/experiments/gd_cifar10"
   log_name: "encoder" 
   phase: "test" 
   batch_size: 128 

@@ -8,7 +8,6 @@ args:
   lr: 1e-4
                       
   lr_anneal_steps: 5000
-  data_dir: "/store/CIA/js2164/data"
   dataset: "cifar10"
   accumulate_grad_batches: 1
   grad_clip: 1
