@@ -1,0 +1,76 @@
+args:
+  phase: 'train'
+  data_dir: ""
+  dataset: ""
+  log_dir: "" 
+  log_name: ""
+  schedule_sampler: "uniform"
+  lr: 1e-4
+  weight_decay: 0.0
+  lr_anneal_steps: 0
+  gpus: 1 #new
+  num_nodes: 1 #new
+  accelerator :  null #new
+  workers :  4 #new
+  accumulate_grad_batches: 1 #new
+  grad_clip :  0. #new 
+  batch_size: 1
+  microbatch: -1  # -1 disables microbatches
+  ema_rate: "0.9999"  # comma-separated list of EMA values
+  log_interval: 10
+  save_interval: 10000
+  resume_checkpoint: null
+  step_limit :  2000000 #new
+  epochs_limit :  10000 #new
+  use_fp16: False
+  fp16_scale_growth: 1e-3
+  image_size: 64
+
+  ### ScoreVAE settings #new
+  diffusion_model_checkpoint: ""
+  latent_dim :  1024 
+  encoder_use_fp16 :  False
+  encoder_width :  128
+  encoder_depth :  2
+  encoder_attention_resolutions :  "32168"
+  encoder_use_scale_shift_norm :  True
+  encoder_resblock_updown :  True
+  encoder_pool :  "attention"
+
+  #sampling settings
+  clip_denoised: False
+  use_ddim: True
+
+  #diffusion_defaults():
+  learn_sigma: False
+  diffusion_steps: 1000
+  noise_schedule: "linear"
+  timestep_respacing: ""
+  use_kl: False
+  predict_xstart: False
+  rescale_timesteps: False
+  rescale_learned_sigmas: False
+
+  #classifier_defaults
+  classifier_use_fp16: False
+  classifier_width: 128
+  classifier_depth: 2
+  classifier_attention_resolutions: "32168"  # 16
+  classifier_use_scale_shift_norm: True  # False
+  classifier_resblock_updown: True  # False
+  classifier_pool: "attention"
+
+  #model_and_diffusion_defaults
+  num_channels: 128
+  num_res_blocks: 2
+  num_heads: 4
+  num_heads_upsample: -1
+  num_head_channels: -1
+  attention_resolutions: "168"
+  channel_mult: ""
+  dropout: 0.0
+  class_cond: False
+  use_checkpoint: False
+  use_scale_shift_norm: True
+  resblock_updown: False
+  use_new_attention_order: False

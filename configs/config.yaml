@@ -3,10 +3,9 @@ defaults:
 args:
   log_dir: "/store/CIA/js2164/models/gd_cifar10"
   log_name: "encoder" 
-  phase: "train" 
+  phase: "test" 
   batch_size: 128 
   lr: 1e-4
-  beta: 1e-1
                       
   lr_anneal_steps: 5000
   data_dir: "/store/CIA/js2164/data"
