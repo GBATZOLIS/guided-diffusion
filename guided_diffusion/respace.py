@@ -92,6 +92,9 @@ class SpacedDiffusion(GaussianDiffusion):
 
     def scoreVAE_training_losses(self, encoder, diffusion_model,  *args, **kwargs):
         return super().scoreVAE_training_losses(self._wrap_model(encoder), self._wrap_model(diffusion_model), *args, **kwargs)
+    
+    def compatible_scoreVAE_training_losses(self, encoder, diffusion_model,  *args, **kwargs):
+        return super().compatible_scoreVAE_training_losses(self._wrap_model(encoder), self._wrap_model(diffusion_model), *args, **kwargs)
 
     def training_losses(
         self, model, *args, **kwargs
