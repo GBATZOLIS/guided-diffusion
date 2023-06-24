@@ -191,46 +191,46 @@ class ScoreVAE(pl.LightningModule):
         z = mean_z + th.sqrt(log_var_z.exp())*th.randn_like(mean_z)
         return z
     
-    def reconstruct(self, z, time_respacing="", sampling_scheme='default', clip_denoised='default'):
-        def get_encoder_correction_fn(encoder):
-            
-            def get_log_density_fn(encoder):
-                def log_density_fn(x, z, t):
-                    latent_distribution_parameters = encoder(x, t)
-                    #print(latent_distribution_parameters.requires_grad)
-                    latent_dim = latent_distribution_parameters.size(1)//2
-                    mean_z = latent_distribution_parameters[:, :latent_dim]
-                    log_var_z = latent_distribution_parameters[:, latent_dim:]
-                    logdensity = -1/2*th.sum(th.square(z - mean_z)/log_var_z.exp(), dim=1)
-                    return logdensity
+    def get_encoder_correction_fn(self, encoder):
+        def get_log_density_fn(encoder):
+            def log_density_fn(x, z, t):
+                latent_distribution_parameters = encoder(x, t)
+                #print(latent_distribution_parameters.requires_grad)
+                latent_dim = latent_distribution_parameters.size(1)//2
+                mean_z = latent_distribution_parameters[:, :latent_dim]
+                log_var_z = latent_distribution_parameters[:, latent_dim:]
+                logdensity = -1/2*th.sum(th.square(z - mean_z)/log_var_z.exp(), dim=1)
+                return logdensity
                     
-                return log_density_fn
+            return log_density_fn
 
-            def encoder_correction_fn(x_t, t, z):
-                th.set_grad_enabled(True)
-                x = x_t.detach()
-                x.requires_grad_()
+        def encoder_correction_fn(x_t, t, z):
+            th.set_grad_enabled(True)
+            x = x_t.detach()
+            x.requires_grad_()
                 
-                #t = t.float().requires_grad_(True)  #new 
-                #z = z.requires_grad_(True)  #new 
+            #t = t.float().requires_grad_(True)  #new 
+            #z = z.requires_grad_(True)  #new 
 
-                log_density_fn = get_log_density_fn(encoder)
-                device = x.device
-                ftx = log_density_fn(x, z, t)
+            log_density_fn = get_log_density_fn(encoder)
+            device = x.device
+            ftx = log_density_fn(x, z, t)
                 
-                # Check requires_grad and grad_fn
-                #for var_name, tensor in [('x', x), ('t', t), ('z', z), ('ftx', ftx)]:
-                #    print(f"{var_name} requires_grad: {tensor.requires_grad}, grad_fn: {tensor.grad_fn}")
+            # Check requires_grad and grad_fn
+            #for var_name, tensor in [('x', x), ('t', t), ('z', z), ('ftx', ftx)]:
+            #    print(f"{var_name} requires_grad: {tensor.requires_grad}, grad_fn: {tensor.grad_fn}")
                 
-                grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
+            grad_log_density = th.autograd.grad(outputs=ftx, inputs=x,
                                       grad_outputs=th.ones(ftx.size()).to(device),
                                       create_graph=True, retain_graph=True, only_inputs=True)[0]
-                th.set_grad_enabled(False)
-                return grad_log_density
+            th.set_grad_enabled(False)
+            return grad_log_density
 
-            return encoder_correction_fn
-        
-        encoder_correction_fn = get_encoder_correction_fn(self.encoder)
+        return encoder_correction_fn
+
+
+    def reconstruct(self, z, time_respacing="", sampling_scheme='default', clip_denoised='default'):
+        encoder_correction_fn = self.get_encoder_correction_fn(self.encoder)
         cond_kwargs={}
         cond_kwargs['z'] = z
 

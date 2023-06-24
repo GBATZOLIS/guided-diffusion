@@ -1,0 +1,31 @@
+defaults:
+  - defaults
+
+args:
+  home: ""
+  log_dir: "${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/"
+  log_name: "MSE_simple_prior" 
+  phase: "train" 
+  batch_size: 128 
+  lr: 1e-4
+                      
+  lr_anneal_steps: 2500
+  dataset: "cifar10"
+  accumulate_grad_batches: 1
+  grad_clip: 1
+                      
+  attention_resolutions: 32,16,8
+  class_cond: False
+  diffusion_steps: 1000
+  image_size: 32
+  learn_sigma: False
+                      
+  dropout: 0.3
+  noise_schedule: "linear"
+  num_channels: 128
+  num_head_channels: 64
+  num_res_blocks: 2
+  resblock_updown: True
+                      
+  use_fp16: False
+  use_scale_shift_norm: True
