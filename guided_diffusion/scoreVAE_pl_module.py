@@ -161,7 +161,7 @@ class ScoreVAE(pl.LightningModule):
         torch.enable_grad()
         x, cond = self._handle_batch(batch)
         z = self.encode(x)
-        reconstructed_samples = self.reconstruct(z, time_respacing='250')
+        reconstructed_samples = self.reconstruct(z, time_respacing="ddim250", sampling_scheme='ddim', clip_denoised=False)
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstructed_samples.to(self.device), x.to(self.device)))
 
         difference = torch.flatten(reconstructed_samples, start_dim=1) - torch.flatten(x, start_dim=1)
@@ -380,7 +380,7 @@ class ScoreVAESampleLoggingCallback(Callback):
         self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if trainer.current_epoch in [110]:
+        if trainer.current_epoch in [25]:
             #ddim works properly
             #diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='ddim250', sampling_scheme='ddim')
             #pl_module.log_sample(diffusion_samples, name='diffusion_samples_ddim')
@@ -388,7 +388,7 @@ class ScoreVAESampleLoggingCallback(Callback):
             diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='1000', sampling_scheme='psample', clip_denoised=True)
             pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample_epoch_%d' % trainer.current_epoch)
 
-        if (trainer.current_epoch+1) % 30 == 0:
+        if (trainer.current_epoch+1) % 25 == 0:
             
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
@@ -398,9 +398,9 @@ class ScoreVAESampleLoggingCallback(Callback):
             # Generate sample using the encode and reconstruct methods
             input_samples = x.to(pl_module.device)
             z = pl_module.encode(input_samples)
-            reconstructed_samples = pl_module.reconstruct(z, time_respacing='1000', sampling_scheme = 'psample', clip_denoised=True)
+            reconstructed_samples = pl_module.reconstruct(z, time_respacing='250', sampling_scheme = 'psample', clip_denoised=False) #was True in previous exps
 
-            reconstructed_samples_ddim = pl_module.reconstruct(z, time_respacing='ddim250', sampling_scheme = 'ddim', clip_denoised=True)
+            reconstructed_samples_ddim = pl_module.reconstruct(z, time_respacing='ddim250', sampling_scheme = 'ddim', clip_denoised=False)
             pl_module.log_sample(reconstructed_samples_ddim, name='reconstructed_samples_ddim')
 
             self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)

@@ -100,7 +100,7 @@ def create_argparser():
 
         #sampling settings
         clip_denoised=True,
-        use_ddim=False
+        use_ddim=True
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
