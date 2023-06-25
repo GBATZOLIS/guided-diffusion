@@ -1,6 +1,7 @@
 defaults:
   - defaults
 args:
+  data_dir: "${args.home}/rds_work/datasets"
   log_dir: "/store/CIA/js2164/models/gd_cifar10"
   log_name: "encoder" 
   phase: "test" 

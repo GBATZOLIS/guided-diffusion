@@ -3,6 +3,7 @@ defaults:
 
 args:
   home: ""
+  data_dir: "/home/gb511/datasets"
   log_dir: "/home/gb511/projects/scoreVAE/experiments/cifar10"
   log_name: "encoder_test" 
   phase: "test" 
