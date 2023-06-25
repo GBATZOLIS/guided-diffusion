@@ -185,7 +185,7 @@ class ScoreVAE(pl.LightningModule):
             encoder_contribution = out["variance"] * gradient.float()
             new_mean = out["mean"].float() + encoder_contribution
 
-            enc_contribution_norm = torch.linalg.norm(enc_contribution_norm.reshape(enc_contribution_norm.shape[0], -1), dim=1)
+            enc_contribution_norm = torch.linalg.norm(encoder_contribution.reshape(encoder_contribution.shape[0], -1), dim=1)
             new_mean_norm = torch.linalg.norm(new_mean.reshape(new_mean.shape[0], -1), dim=1)
             ratio = enc_contribution_norm / new_mean_norm
 
