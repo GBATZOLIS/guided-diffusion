@@ -105,7 +105,7 @@ def main(config):
         batch = next(iter(dataloader))
         x, cond = pl_module._handle_batch(batch)
         pl_module.inspect_encoder_profile(x)
-        
+
 
 
 def create_argparser():
@@ -162,8 +162,21 @@ def create_argparser():
 
 
 if __name__ == "__main__":
-    initialize(version_base=None, config_path="../configs", job_name="test_app")
+    # Create a parser
+    parser = argparse.ArgumentParser(description='Provide configuration path and name.')
+
+    # Add arguments
+    parser.add_argument('--config_path', type=str, default='../configs', help='Relative path to configuration files.')
+    parser.add_argument('--config_name', type=str, default='train', help='Name of the configuration file.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Use the config path and name provided in command line arguments
+    initialize(version_base=None, config_path=args.config_path, job_name="test_app")
+
     home_path = os.path.expanduser('~')
-    cfg = compose(config_name="train", overrides=[f"args.home={home_path}"])
-    #cfg = compose(config_name="train")
+    cfg = compose(config_name=args.config_name, overrides=[f"args.home={home_path}"])
+
+    # Run your main function here
     main(cfg)
