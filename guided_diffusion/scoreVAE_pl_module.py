@@ -409,10 +409,9 @@ class LoadAndFreezeModelCallback(Callback):
 class ScoreVAETestSetupCallback(Callback):
     def __init__(self):
         super().__init__()
-        self.lpips_distance_fn = lpips.LPIPS(net='vgg')
 
     def setup(self, trainer, pl_module, stage):
-        self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
+        pl_module.lpips_distance_fn = lpips.LPIPS(net='vgg').to(pl_module.device)
 
 class ScoreVAESampleLoggingCallback(Callback):
     def __init__(self):
