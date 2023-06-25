@@ -104,7 +104,7 @@ def main(config):
         dataloader = datamodule.val_dataloader()
         batch = next(iter(dataloader))
         x, cond = pl_module._handle_batch(batch)
-        pl_module.inspect_encoder_profile(x)
+        pl_module.inspect_encoder_profile(x.to(pl_module.device))
 
 
 
