@@ -176,9 +176,9 @@ class ScoreVAE(pl.LightningModule):
         for i in tqdm(range(num_timesteps)):
             t = torch.ones((x.size(0), )).type_as(x) * torch.tensor(i).type_as(x)
             noise = th.randn_like(x)
-            x_t = self.q_sample(x, t, noise=noise)
+            x_t = self.diffusion.q_sample(x, t, noise=noise)
             
-            out = self.p_mean_variance(self.diffusion_model, x_t, t, clip_denoised=False, model_kwargs=None)
+            out = self.diffusion.p_mean_variance(self.diffusion_model, x_t, t, clip_denoised=False, model_kwargs=None)
             gradient = encoder_correction_fn(x_t, t, z)
 
             encoder_contribution = out["variance"] * gradient.float()
