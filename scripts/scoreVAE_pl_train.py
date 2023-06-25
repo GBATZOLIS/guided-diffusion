@@ -97,7 +97,7 @@ def main(config):
         trainer.test(pl_model, datamodule=datamodule, ckpt_path=args.resume_checkpoint)
     
     elif args.phase == 'inspection':
-        pl_model = ScoreVAE(args)
+        pl_module = ScoreVAE(args)
         pl_module = pl_module.load_from_checkpoint(args.resume_checkpoint, args=args)
 
         datamodule.setup()
