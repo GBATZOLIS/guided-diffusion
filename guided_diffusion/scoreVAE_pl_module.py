@@ -159,9 +159,9 @@ class ScoreVAE(pl.LightningModule):
         return loss
     
     def inspect_encoder_profile(self, batch):
-        log_path = self.args.log_path
+        log_dir = self.args.log_dir
         log_name = self.args.log_name
-        save_path = os.path.join(log_path, log_name, 'encoder_inspection')
+        save_path = os.path.join(log_dir, log_name, 'encoder_inspection')
         Path(save_path).mkdir(parents=True, exist_ok=True)
 
         encoder_correction_fn = self.get_encoder_correction_fn(self.encoder)
