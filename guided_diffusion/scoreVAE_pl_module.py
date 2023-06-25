@@ -31,6 +31,9 @@ from torch.optim import AdamW
 import torch 
 import torchvision
 import lpips
+from pathlib import Path
+import pickle
+from tqdm import tqdm
 
 class ScoreVAE(pl.LightningModule):
     def __init__(self, args):
@@ -154,6 +157,46 @@ class ScoreVAE(pl.LightningModule):
 
 
         return loss
+    
+    def inspect_encoder_profile(self, batch):
+        log_path = self.args.log_path
+        log_name = self.args.log_name
+        save_path = os.path.join(log_path, log_name, 'encoder_inspection')
+        Path(save_path).mkdir(parents=True, exist_ok=True)
+
+        encoder_correction_fn = self.get_encoder_correction_fn(self.encoder)
+
+        x, cond = self._handle_batch(batch)
+        z = self.encode(x)
+
+        ratios = []
+        corrections = []
+
+        num_timesteps = self.diffusion.num_timesteps
+        for i in tqdm(range(num_timesteps)):
+            t = torch.ones((x.size(0), )).type_as(x) * torch.tensor(i).type_as(x)
+            noise = th.randn_like(x)
+            x_t = self.q_sample(x, t, noise=noise)
+            
+            out = self.p_mean_variance(self.diffusion_model, x_t, t, clip_denoised=False, model_kwargs=None)
+            gradient = encoder_correction_fn(x_t, t, z)
+
+            encoder_contribution = out["variance"] * gradient.float()
+            new_mean = out["mean"].float() + encoder_contribution
+
+            enc_contribution_norm = torch.linalg.norm(enc_contribution_norm.reshape(enc_contribution_norm.shape[0], -1), dim=1)
+            new_mean_norm = torch.linalg.norm(new_mean.reshape(new_mean.shape[0], -1), dim=1)
+            ratio = enc_contribution_norm / new_mean_norm
+
+            mean_ratio = torch.mean(ratio)
+            ratios.append(mean_ratio.item()) 
+            corrections.append(torch.mean(enc_contribution_norm).item())
+
+        with open(os.path.join(save_path, 'inspection_info.pkl'), 'wb') as f:
+            save_dict = {'ratios':ratios, 'corrections': corrections}
+            pickle.dump(save_dict, f)
+
+
     
     def test_step(self, batch, batch_idx):
         # training_step defined the train loop.
