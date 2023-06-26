@@ -171,10 +171,12 @@ class ScoreVAE(pl.LightningModule):
 
         ratios = []
         corrections = []
+        snrs = []
 
         num_timesteps = self.diffusion.num_timesteps
         ones = torch.ones((x.size(0),)).type_as(x)
-        for i in tqdm(range(num_timesteps)):
+        for i in tqdm(list(range(0, num_timesteps, 4)) + [num_timesteps - 1]):
+            snrs.append(self.diffusion.sqrt_alphas_cumprod[i]**2/self.sqrt_one_minus_alphas_cumprod[t]**2)
             t = (ones * i).long()
             noise = th.randn_like(x)
             x_t = self.diffusion.q_sample(x, t, noise=noise)
@@ -194,7 +196,7 @@ class ScoreVAE(pl.LightningModule):
             corrections.append(torch.mean(enc_contribution_norm).item())
 
         with open(os.path.join(save_path, 'inspection_info.pkl'), 'wb') as f:
-            save_dict = {'ratios':ratios, 'corrections': corrections}
+            save_dict = {'ratios':ratios, 'corrections': corrections, 'snrs' : snrs}
             pickle.dump(save_dict, f)
 
 
