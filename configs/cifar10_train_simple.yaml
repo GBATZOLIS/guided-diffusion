@@ -20,7 +20,7 @@ args:
   class_cond: False
   diffusion_steps: 1000
   image_size: 32
-  learn_sigma: True
+  learn_sigma: False
                       
   dropout: 0.3
   noise_schedule: "cosine"
