@@ -212,8 +212,6 @@ class ScoreVAE(pl.LightningModule):
                 pickle.dump(info, f)
         
         return info
-
-
     
     def test_step(self, batch, batch_idx):
         # training_step defined the train loop.
