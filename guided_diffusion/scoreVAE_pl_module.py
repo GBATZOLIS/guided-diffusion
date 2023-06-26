@@ -185,7 +185,7 @@ class ScoreVAE(pl.LightningModule):
 
         num_timesteps = self.diffusion.num_timesteps
         ones = torch.ones((x.size(0),)).type_as(x)
-        for i in tqdm(list(range(0, num_timesteps, 32)) + [num_timesteps - 1]):
+        for i in tqdm(list(range(0, num_timesteps, 8)) + [num_timesteps - 1]):
             snrs.append(self.diffusion.sqrt_alphas_cumprod[i]**2/self.diffusion.sqrt_one_minus_alphas_cumprod[i]**2)
             t = (ones * i).long()
             noise = th.randn_like(x)
@@ -445,7 +445,7 @@ class ScoreVAESampleLoggingCallback(Callback):
             diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='1000', sampling_scheme='psample', clip_denoised=True)
             pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample_epoch_%d' % trainer.current_epoch)
 
-        if (trainer.current_epoch+1) % 1 == 0:
+        if (trainer.current_epoch+1) % 20 == 0:
             dataloader = trainer.datamodule.val_dataloader()
             batch = next(iter(dataloader))
             x, cond = pl_module._handle_batch(batch)

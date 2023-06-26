@@ -1,0 +1,49 @@
+defaults:
+  - defaults
+
+args:
+  home: ""
+  data_dir: "${args.home}/rds_work/datasets" #"/home/gb511/datasets" 
+  log_dir: "${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/" #"/home/gb511/projects/scoreVAE/experiments/cifar10" 
+  log_name: "encoder_vlb" 
+  phase: "train"
+  accelerator: 'cpu'
+  batch_size: 256
+  lr: 1e-4
+                      
+  lr_anneal_steps: 2500
+  dataset: "cifar10"
+  accumulate_grad_batches: 1
+  grad_clip: 1
+                      
+  attention_resolutions: 32,16,8
+  class_cond: False
+  diffusion_steps: 1000
+  image_size: 32
+  learn_sigma: True
+                      
+  dropout: 0.3
+  noise_schedule: "cosine"
+  num_channels: 128
+  num_head_channels: 64
+  num_res_blocks: 2
+  resblock_updown: True
+                      
+  use_fp16: False
+  use_scale_shift_norm: True
+  #/home/gb511/projects/scoreVAE/experiments/cifar10/prior/checkpoints/epoch=347-step=122496.ckpt 
+  diffusion_model_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/prior/checkpoints/epoch=347-step=122496.ckpt
+  #resume_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_test/checkpoints/epoch=414-step=146080.ckpt
+
+  #ScoreVAE settings
+  beta: 1e-4
+  scoreVAE_training_loss: 'vlb'
+  latent_dim: 384
+  encoder_use_fp16: False
+  encoder_width: 128
+  encoder_depth: 2
+  encoder_attention_resolutions: 32,16,8
+  encoder_use_scale_shift_norm: True              
+  encoder_resblock_updown: True
+  encoder_pool: attention
+  encoder_type: 'ConvNet'

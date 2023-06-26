@@ -8,7 +8,7 @@ args:
   log_name: "encoder_vlb" 
   phase: "train"
   accelerator: 'cpu'
-  batch_size: 16
+  batch_size: 256
   lr: 1e-4
                       
   lr_anneal_steps: 2500
@@ -37,7 +37,7 @@ args:
 
   #ScoreVAE settings
   beta: 1e-4
-  scoreVAE_training_loss: 'simple'
+  scoreVAE_training_loss: 'vlb'
   latent_dim: 384
   encoder_use_fp16: False
   encoder_width: 128
