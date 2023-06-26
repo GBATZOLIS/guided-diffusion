@@ -136,5 +136,5 @@ class _WrappedModel:
         else:
             new_ts = ts
         
-        print(new_ts)
+        #print(new_ts)
         return self.model(x, new_ts, **kwargs)
