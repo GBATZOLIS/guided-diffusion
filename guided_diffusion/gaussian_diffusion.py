@@ -751,7 +751,7 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
     
-    def compatible_scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, clip_denoised=True, noise=None, train=True):
+    def compatible_scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, clip_denoised=False, noise=None, train=True):
         def get_encoder_correction_fn(encoder):
             def get_log_density_fn(encoder):
                 def log_density_fn(x, t, z):
@@ -848,7 +848,7 @@ class GaussianDiffusion:
         return terms
 
 
-    def scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True):
+    def scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, clip_denoised=False, noise=None, train=True):
         #Compute scoreVAE training loss
         #we assume that the diffusion model predicts the noise (noise predictor -> epsilon)
         def get_encoder_correction_fn(encoder):
