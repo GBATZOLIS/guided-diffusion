@@ -176,7 +176,7 @@ class ScoreVAE(pl.LightningModule):
         num_timesteps = self.diffusion.num_timesteps
         ones = torch.ones((x.size(0),)).type_as(x)
         for i in tqdm(list(range(0, num_timesteps, 4)) + [num_timesteps - 1]):
-            snrs.append(self.diffusion.sqrt_alphas_cumprod[i]**2/self.diffusion.sqrt_one_minus_alphas_cumprod[t]**2)
+            snrs.append(self.diffusion.sqrt_alphas_cumprod[i]**2/self.diffusion.sqrt_one_minus_alphas_cumprod[i]**2)
             t = (ones * i).long()
             noise = th.randn_like(x)
             x_t = self.diffusion.q_sample(x, t, noise=noise)
