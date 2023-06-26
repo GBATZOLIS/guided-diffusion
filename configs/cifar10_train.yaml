@@ -6,7 +6,8 @@ args:
   data_dir: "/home/gb511/datasets" #"${args.home}/rds_work/datasets"
   log_dir: "/home/gb511/projects/scoreVAE/experiments/cifar10" #"${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/"
   log_name: "encoder_vlb" 
-  phase: "train" 
+  phase: "train"
+  accelerator: 'cpu'
   batch_size: 16
   lr: 1e-4
                       
