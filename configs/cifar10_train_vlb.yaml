@@ -7,8 +7,8 @@ args:
   log_dir: "${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/" #"/home/gb511/projects/scoreVAE/experiments/cifar10" 
   log_name: "encoder_vlb" 
   phase: "train"
-  accelerator: 'cpu'
-  batch_size: 32
+  accelerator: 'gpu'
+  batch_size: 256
   lr: 1e-4
                       
   lr_anneal_steps: 2500
