@@ -3,15 +3,14 @@ defaults:
 
 args:
   home: ""
-  data_dir: "${args.home}/rds_work/datasets"
-  log_dir: "${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/"
-  log_name: "encoder_test" 
-  phase: "test" 
+  data_dir: "/home/gb511/datasets" #"${args.home}/rds_work/datasets"
+  log_dir: "/home/gb511/projects/scoreVAE/experiments/cifar10" #"${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/"
+  log_name: "encoder_vlb" 
+  phase: "train" 
   batch_size: 128 
   lr: 1e-4
-  beta: 1e-6
                       
-  lr_anneal_steps: 5000
+  lr_anneal_steps: 2500
   dataset: "cifar10"
   accumulate_grad_batches: 1
   grad_clip: 1
@@ -31,9 +30,12 @@ args:
                       
   use_fp16: False
   use_scale_shift_norm: True
-  diffusion_model_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/prior/checkpoints/epoch=347-step=122496.ckpt
-  resume_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_test/checkpoints/epoch=414-step=146080.ckpt
+  diffusion_model_checkpoint:  /home/gb511/projects/scoreVAE/experiments/cifar10/prior/checkpoints/epoch=347-step=122496.ckpt #${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/prior/checkpoints/epoch=347-step=122496.ckpt
+  resume_checkpoint: None #${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_test/checkpoints/epoch=414-step=146080.ckpt
 
+  #ScoreVAE settings
+  beta: 1e-4
+  scoreVAE_training_loss: 'vlb'
   latent_dim: 384
   encoder_use_fp16: False
   encoder_width: 128
@@ -42,3 +44,4 @@ args:
   encoder_use_scale_shift_norm: True              
   encoder_resblock_updown: True
   encoder_pool: attention
+  encoder_type: 'ConvNet'

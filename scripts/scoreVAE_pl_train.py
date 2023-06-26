@@ -138,6 +138,7 @@ def create_argparser():
         
         ### ScoreVAE settings #new
         diffusion_model_checkpoint="",
+        scoreVAE_training_loss='vlb',
         beta=0.01,
         latent_dim = 1024, 
         encoder_use_fp16 = False,

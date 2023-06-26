@@ -790,7 +790,9 @@ class GaussianDiffusion:
         terms = {} #initialise the terms dictionary that stores the loss values
 
         #compute the parameters of the encoding distribution p_φ(z|x_t)
-        latent_distribution_parameters = encoder(x_start, th.zeros_like(t))
+        
+        #encoder(x_start, th.zeros_like(t))
+        latent_distribution_parameters = encoder(x_start, th.full(size=(x_start.size(0),), fill_value=-1).type_as(x_start))
         latent_dim = latent_distribution_parameters.size(1)//2
         mean_z = latent_distribution_parameters[:, :latent_dim]
         log_var_z = latent_distribution_parameters[:, latent_dim:]
@@ -846,7 +848,7 @@ class GaussianDiffusion:
         return terms
 
 
-    def scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True, beta = 0.01):
+    def scoreVAE_training_losses(self, encoder, diffusion_model, x_start, t, model_kwargs=None, noise=None, train=True):
         #Compute scoreVAE training loss
         #we assume that the diffusion model predicts the noise (noise predictor -> epsilon)
         def get_encoder_correction_fn(encoder):
@@ -889,7 +891,7 @@ class GaussianDiffusion:
         terms = {} #initialise the terms dictionary that stores the loss values
 
         #compute the parameters of the encoding distribution p_φ(z|x_t)
-        latent_distribution_parameters = encoder(x_start, th.zeros_like(t))
+        latent_distribution_parameters = encoder(x_start, th.full(size=(x_start.size(0),), fill_value=-1).type_as(x_start))
         latent_dim = latent_distribution_parameters.size(1)//2
         mean_z = latent_distribution_parameters[:, :latent_dim]
         log_var_z = latent_distribution_parameters[:, latent_dim:]
@@ -921,7 +923,7 @@ class GaussianDiffusion:
         terms["kl-penalty"] = kl_loss
 
         #compute the weighted loss
-        terms['loss'] = terms["mse"] + beta * terms["kl-penalty"]
+        #terms['loss'] = terms["mse"] + beta * terms["kl-penalty"]
 
         return terms
 

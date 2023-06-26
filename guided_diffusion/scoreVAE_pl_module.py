@@ -7,6 +7,7 @@ import torch as th
 import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 from torch.optim import AdamW
+import matplotlib.pyplot as plt
 
 from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
@@ -80,14 +81,22 @@ class ScoreVAE(pl.LightningModule):
         # Convert the diffusion model to FP16
         #self.diffusion_model.convert_to_fp16()
         #self.diffusion_model.dtype = torch.float16
-
-        
+    
     def _handle_batch(self, batch):
         if type(batch) == list:
             x, cond = batch
         else:
             x, cond = batch, {}
         return x, cond
+
+    def get_training_loss_fn(self, ):
+        if self.args.scoreVAE_training_loss == 'vlb':
+            loss_fn = self.diffusion.compatible_scoreVAE_training_losses
+        elif self.args.scoreVAE_training_loss == 'simple':
+            loss_fn = self.diffusion.scoreVAE_training_losses
+        else:
+            raise NotImplementedError('The training loss function is not recognised.')
+        return loss_fn
 
     def training_step(self, batch, batch_idx):
         # training_step defined the train loop.
@@ -96,7 +105,7 @@ class ScoreVAE(pl.LightningModule):
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
-                self.diffusion.compatible_scoreVAE_training_losses,
+                self.get_training_loss_fn(),
                 self.encoder,
                 self.diffusion_model,
                 x,
@@ -130,7 +139,7 @@ class ScoreVAE(pl.LightningModule):
         t, weights = self.schedule_sampler.sample(x.shape[0], x.device)
 
         compute_losses = functools.partial(
-                self.diffusion.compatible_scoreVAE_training_losses,
+                self.get_training_loss_fn(),
                 self.encoder,
                 self.diffusion_model,
                 x,
@@ -158,11 +167,12 @@ class ScoreVAE(pl.LightningModule):
 
         return loss
     
-    def inspect_encoder_profile(self, batch):
-        log_dir = self.args.log_dir
-        log_name = self.args.log_name
-        save_path = os.path.join(log_dir, log_name, 'encoder_inspection')
-        Path(save_path).mkdir(parents=True, exist_ok=True)
+    def inspect_encoder_profile(self, batch, save_info=True):
+        if save_info:
+            log_dir = self.args.log_dir
+            log_name = self.args.log_name
+            save_path = os.path.join(log_dir, log_name, 'encoder_inspection')
+            Path(save_path).mkdir(parents=True, exist_ok=True)
 
         encoder_correction_fn = self.get_encoder_correction_fn(self.encoder)
 
@@ -194,10 +204,14 @@ class ScoreVAE(pl.LightningModule):
             mean_ratio = torch.mean(ratio)
             ratios.append(mean_ratio.item()) 
             corrections.append(torch.mean(enc_contribution_norm).item())
+        
+        info = {'ratios':ratios, 'corrections': corrections, 'snrs' : snrs}
 
-        with open(os.path.join(save_path, 'inspection_info.pkl'), 'wb') as f:
-            save_dict = {'ratios':ratios, 'corrections': corrections, 'snrs' : snrs}
-            pickle.dump(save_dict, f)
+        if save_info:
+            with open(os.path.join(save_path, 'inspection_info.pkl'), 'wb') as f:
+                pickle.dump(info, f)
+        
+        return info
 
 
     
@@ -228,7 +242,7 @@ class ScoreVAE(pl.LightningModule):
 
     def encode(self, x):
         #compute the parameters of the encoding distribution p_φ(z|x_t)
-        latent_distribution_parameters = self.encoder(x, th.zeros(size=(x.size(0),)).to(self.device))
+        latent_distribution_parameters = self.encoder(x, torch.full(size=(x.size(0),), fill_value=-1).to(self.device)) #self.encoder(x, th.zeros(size=(x.size(0),)).to(self.device))
         latent_dim = latent_distribution_parameters.size(1)//2
         mean_z = latent_distribution_parameters[:, :latent_dim]
         log_var_z = latent_distribution_parameters[:, latent_dim:]
@@ -433,8 +447,15 @@ class ScoreVAESampleLoggingCallback(Callback):
             diffusion_samples = pl_module.sample_from_diffusion_model(time_respacing='1000', sampling_scheme='psample', clip_denoised=True)
             pl_module.log_sample(diffusion_samples, name='diffusion_samples_psample_epoch_%d' % trainer.current_epoch)
 
+        if (trainer.current_epoch+1) % 2 == 0:
+            dataloader = trainer.datamodule.val_dataloader()
+            batch = next(iter(dataloader))
+            x, cond = pl_module._handle_batch(batch)
+            inspection_data = pl_module.inspect_encoder_profile(x.to(pl_module.device), save_info=False)
+            fig = self.create_inspection_plot(inspection_data)
+            pl_module.logger.experiment.add_figure('Contribution Inspection', fig, global_step=trainer.current_epoch)
+
         if (trainer.current_epoch+1) % 25 == 0:
-            
             # Obtain a batch from the validation dataloader
             dataloader = trainer.datamodule.val_dataloader()
             batch = next(iter(dataloader))
@@ -442,6 +463,7 @@ class ScoreVAESampleLoggingCallback(Callback):
 
             # Generate sample using the encode and reconstruct methods
             input_samples = x.to(pl_module.device)
+
             z = pl_module.encode(input_samples)
             reconstructed_samples = pl_module.reconstruct(z, time_respacing='250', sampling_scheme = 'psample', clip_denoised=False) #was True in previous exps
 
@@ -470,5 +492,34 @@ class ScoreVAESampleLoggingCallback(Callback):
             # Log the average L2 norm
             pl_module.log('L2', avg_L2norm.detach(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
+    def create_inspection_plot(self, data):
+        ratios = data['ratios']
+        corrections = data['corrections']
+        snrs = data['snrs']
+
+        # Create subplots
+        fig, axs = plt.subplots(3, 1, figsize=(10, 18))
+
+        # Plot ratios
+        axs[0].plot(ratios)
+        axs[0].set_title('Ratios over Time')
+        axs[0].set_xlabel('Time step')
+        axs[0].set_ylabel('Ratio')
+        axs[0].grid(True)
+
+        # Plot corrections
+        axs[1].plot(corrections)
+        axs[1].set_title('Corrections over Time')
+        axs[1].set_xlabel('Time step')
+        axs[1].set_ylabel('Correction')
+        axs[1].grid(True)
+
+        # Plot SNRs
+        axs[2].plot(snrs)
+        axs[2].set_title('SNR over Time')
+        axs[2].set_xlabel('Time step')
+        axs[2].set_ylabel('SNR')
+        axs[2].grid(True)
+        return fig
 
 
