@@ -37,7 +37,7 @@ args:
   #resume_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_test/checkpoints/epoch=414-step=146080.ckpt
 
   #ScoreVAE settings
-  beta: 1e-4
+  beta: 1e-6
   scoreVAE_training_loss: 'simple'
   latent_dim: 384
   encoder_use_fp16: False
