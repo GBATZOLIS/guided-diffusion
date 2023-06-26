@@ -8,7 +8,7 @@ args:
   log_name: "encoder_vlb" 
   phase: "train"
   accelerator: 'cpu'
-  batch_size: 256
+  batch_size: 32
   lr: 1e-4
                       
   lr_anneal_steps: 2500
