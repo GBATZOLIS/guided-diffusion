@@ -37,7 +37,7 @@ args:
 
   #ScoreVAE settings
   beta: 1e-4
-  scoreVAE_training_loss: 'vlb'
+  scoreVAE_training_loss: 'simple'
   latent_dim: 384
   encoder_use_fp16: False
   encoder_width: 128
