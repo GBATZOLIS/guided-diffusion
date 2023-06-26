@@ -792,7 +792,7 @@ class GaussianDiffusion:
         #compute the parameters of the encoding distribution p_φ(z|x_t)
         
         #encoder(x_start, th.zeros_like(t))
-        latent_distribution_parameters = encoder(x_start, th.full(size=(x_start.size(0),), fill_value=-1).type_as(x_start))
+        latent_distribution_parameters = encoder(x_start, th.full(size=(x_start.size(0),), fill_value=-1).long().type_as(x_start))
         latent_dim = latent_distribution_parameters.size(1)//2
         mean_z = latent_distribution_parameters[:, :latent_dim]
         log_var_z = latent_distribution_parameters[:, latent_dim:]
@@ -891,7 +891,7 @@ class GaussianDiffusion:
         terms = {} #initialise the terms dictionary that stores the loss values
 
         #compute the parameters of the encoding distribution p_φ(z|x_t)
-        latent_distribution_parameters = encoder(x_start, th.full(size=(x_start.size(0),), fill_value=-1).type_as(x_start))
+        latent_distribution_parameters = encoder(x_start, th.full(size=(x_start.size(0),), fill_value=-1).long().type_as(x_start))
         latent_dim = latent_distribution_parameters.size(1)//2
         mean_z = latent_distribution_parameters[:, :latent_dim]
         log_var_z = latent_distribution_parameters[:, latent_dim:]
