@@ -3,8 +3,8 @@ defaults:
 
 args:
   home: ""
-  data_dir: "/home/gb511/datasets" #"${args.home}/rds_work/datasets"
-  log_dir: "/home/gb511/projects/scoreVAE/experiments/cifar10" #"${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/"
+  data_dir: "${args.home}/rds_work/datasets" #"/home/gb511/datasets" 
+  log_dir: "${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/" #"/home/gb511/projects/scoreVAE/experiments/cifar10" 
   log_name: "encoder_vlb" 
   phase: "train"
   accelerator: 'cpu'
@@ -31,8 +31,8 @@ args:
                       
   use_fp16: False
   use_scale_shift_norm: True
-  # ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/prior/checkpoints/epoch=347-step=122496.ckpt
-  diffusion_model_checkpoint: /home/gb511/projects/scoreVAE/experiments/cifar10/prior/checkpoints/epoch=347-step=122496.ckpt 
+  #/home/gb511/projects/scoreVAE/experiments/cifar10/prior/checkpoints/epoch=347-step=122496.ckpt 
+  diffusion_model_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/prior/checkpoints/epoch=347-step=122496.ckpt
   #resume_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_test/checkpoints/epoch=414-step=146080.ckpt
 
   #ScoreVAE settings
