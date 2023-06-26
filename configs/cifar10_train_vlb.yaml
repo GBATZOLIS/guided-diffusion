@@ -8,12 +8,12 @@ args:
   log_name: "encoder_vlb" 
   phase: "train"
   accelerator: 'gpu'
-  batch_size: 64
+  batch_size: 128
   lr: 1e-4
                       
   lr_anneal_steps: 2500
   dataset: "cifar10"
-  accumulate_grad_batches: 2
+  accumulate_grad_batches: 1
   grad_clip: 1
                       
   attention_resolutions: 32,16,8
