@@ -5,11 +5,11 @@ args:
   home: ""
   data_dir: "${args.home}/rds_work/datasets" #"/home/gb511/datasets" 
   log_dir: "${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/" #"/home/gb511/projects/scoreVAE/experiments/cifar10" 
-  log_name: "encoder_simple" 
+  log_name: "encoder_low_beta" 
   phase: "train"
   accelerator: 'gpu'
   batch_size: 128
-  lr: 1e-4
+  lr: 2e-5
                       
   lr_anneal_steps: 2500
   dataset: "cifar10"
@@ -34,10 +34,10 @@ args:
   #/home/gb511/projects/scoreVAE/experiments/cifar10/prior/checkpoints/epoch=347-step=122496.ckpt 
   
   diffusion_model_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/simple_prior/checkpoints/epoch=936-step=329824.ckpt
-  resume_checkpoint: ${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_simple/checkpoints/epoch=124-step=44000.ckpt
+  resume_checkpoint: null #${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_simple/checkpoints/epoch=124-step=44000.ckpt
 
   #ScoreVAE settings
-  beta: 1e-6
+  beta: 1e-10
   scoreVAE_training_loss: 'simple'
   latent_dim: 384
   encoder_use_fp16: False

@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J VAE_celeba_kl_0.01 
+#SBATCH -J scoreVAE_train   
 #SBATCH -o JOB%j.out # File to which STDOUT will be written 
 #SBATCH -e JOB%j.out # File to which STDERR will be written 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
@@ -18,7 +18,7 @@
 #! What types of email messages do you wish to receive? 
 #SBATCH --mail-type=begin        # send email when job begins 
 #SBATCH --mail-type=end 
-#SBATCH --mail-user=gb511@cam.ac.uk 
+#SBATCH --mail-user=js2164@cam.ac.uk 
 #! Do not change: 
 #SBATCH -p ampere
  
@@ -35,4 +35,4 @@ conda activate pytorch2
  
 cd $HOME/rds_work/projects/scoreVAE/guided-diffusion
 
-python -m scripts.scoreVAE_pl_train 
+python -m scripts.scoreVAE_pl_train --config_name cifar10_train_low_beta
