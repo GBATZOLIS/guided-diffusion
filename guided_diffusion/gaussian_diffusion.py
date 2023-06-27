@@ -867,7 +867,7 @@ class GaussianDiffusion:
                   if not train: 
                     th.set_grad_enabled(True)
                   
-                  x = x_t.detach()
+                  x = x_t
                   x.requires_grad_()
 
                   log_density_fn = get_log_density_fn(encoder)

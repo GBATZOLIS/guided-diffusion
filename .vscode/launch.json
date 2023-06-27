@@ -19,6 +19,7 @@
             "console": "integratedTerminal",
             "module": "scripts.scoreVAE_pl_train",
             "justMyCode": false,
+            "args": ["--debug_mode", "True", "--config_name", "cifar10_train_simple"]
             // "args": ["--log_dir", "/store/CIA/js2164/models/gd_cifar10", "--log_name", "encoder", "--phase", "train", "--batch_size", "128", "--lr", "1e-4",
             //         "--lr_anneal_steps", "5000", "--data_dir", "/store/CIA/js2164/data", "--dataset", "cifar10", "--accumulate_grad_batches", "1", "--grad_clip", "1",
             //         "--attention_resolutions", "32,16,8", "--class_cond", "False", "--diffusion_steps", "1000", "--image_size", "32", "--learn_sigma", "True",
