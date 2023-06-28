@@ -33,8 +33,9 @@ def print_memory_usage():
     print(f'Free memory: {mem_info.free / 1024**3:.2f} GB')
     print(f'Memory percentage used: {mem_info.percent}%')
 
-def main():
-    args = create_argparser().parse_args()
+def main(config):
+    #args = create_argparser().parse_args()
+    args = config.args
     
     if args.dataset == 'cifar10':
         datamodule = Cifar10DataModule(args)
