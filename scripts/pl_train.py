@@ -3,6 +3,8 @@ Train a diffusion model on images.
 """
 
 import argparse
+import hydra
+from hydra import compose, initialize
 
 from guided_diffusion.pl_image_datasets import ImageDataModule, Cifar10DataModule
 from guided_diffusion.resample import create_named_schedule_sampler
