@@ -15,7 +15,7 @@ args:
   accumulate_grad_batches: 1
   grad_clip: 1
                       
-  attention_resolutions: 32,16,8
+  attention_resolutions: 16,8
   class_cond: False
   diffusion_steps: 1000
   image_size: 32
