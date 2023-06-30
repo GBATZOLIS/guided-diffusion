@@ -182,5 +182,13 @@ if __name__ == "__main__":
     if args.debug_mode:
         cfg.args.log_name = cfg.args.log_name + "_debug"
 
+    # If not resuming create a new log directory
+    if cfg.args.resume_checkpoint is None:
+        log_path = os.path.join(cfg.args.log_dir, cfg.args.log_name)
+        i = 1
+        while os.path.exists(log_path + "_v" + str(i)):
+            i += 1
+        cfg.args.log_name = cfg.args.log_name + "_v" + str(i)
+
     # Run your main function here
     main(cfg)

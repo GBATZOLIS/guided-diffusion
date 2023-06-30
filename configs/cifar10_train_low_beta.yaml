@@ -9,7 +9,7 @@ args:
   phase: "train"
   accelerator: 'gpu'
   batch_size: 128
-  lr: 2e-5
+  lr: 1e-5 # low learning rate
                       
   lr_anneal_steps: 2500
   dataset: "cifar10"
@@ -37,7 +37,8 @@ args:
   resume_checkpoint: null #${args.home}/rds_work/projects/scoreVAE/experiments/gd_cifar10/encoder_simple/checkpoints/epoch=124-step=44000.ckpt
 
   #ScoreVAE settings
-  beta: 1e-10
+  beta: 1e-8 # low beta
+  ema_rate: "0.999" # using low EMA
   scoreVAE_training_loss: 'simple'
   latent_dim: 384
   encoder_use_fp16: False
@@ -47,4 +48,4 @@ args:
   encoder_use_scale_shift_norm: True              
   encoder_resblock_updown: True
   encoder_pool: attention
-  encoder_type: 'HalfUnet'
+  encoder_type: 'ConvNet'
