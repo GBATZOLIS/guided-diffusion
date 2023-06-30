@@ -822,7 +822,16 @@ class EncoderUNetModel(nn.Module):
         )
         self._feature_size += ch
         self.pool = pool
-        if pool == "adaptive":
+
+        if pool == "adaptivenonzero":
+            self.out = nn.Sequential(
+                normalization(ch),
+                nn.SiLU(),
+                nn.AdaptiveAvgPool2d((1, 1)),
+                conv_nd(dims, ch, out_channels, 1),
+                nn.Flatten(),
+            )
+        elif pool == "adaptive":
             self.out = nn.Sequential(
                 normalization(ch),
                 nn.SiLU(),
