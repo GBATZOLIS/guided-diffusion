@@ -3,6 +3,9 @@ Train a diffusion model on images.
 """
 
 import argparse
+import hydra
+from hydra import compose, initialize
+import os
 
 from guided_diffusion.pl_image_datasets import ImageDataModule, Cifar10DataModule
 from guided_diffusion.resample import create_named_schedule_sampler
@@ -30,8 +33,9 @@ def print_memory_usage():
     print(f'Free memory: {mem_info.free / 1024**3:.2f} GB')
     print(f'Memory percentage used: {mem_info.percent}%')
 
-def main():
-    args = create_argparser().parse_args()
+def main(config):
+    #args = create_argparser().parse_args()
+    args = config.args
     
     if args.dataset == 'cifar10':
         datamodule = Cifar10DataModule(args)
@@ -111,4 +115,24 @@ def create_argparser():
 
 
 if __name__ == "__main__":
-    main()
+    # Create a parser
+    parser = argparse.ArgumentParser(description='Provide configuration path and name.')
+
+    # Add arguments
+    parser.add_argument('--config_path', type=str, default='../configs', help='Relative path to configuration files.')
+    parser.add_argument('--config_name', type=str, default='train', help='Name of the configuration file.')
+    parser.add_argument('--debug_mode', type=bool, default=False, help='Debug mode flag.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Use the config path and name provided in command line arguments
+    initialize(version_base=None, config_path=args.config_path, job_name="test_app")
+
+    home_path = os.path.expanduser('~')
+    cfg = compose(config_name=args.config_name, overrides=[f"args.home={home_path}"])
+    if args.debug_mode:
+        cfg.args.log_name = cfg.args.log_name + "_debug"
+
+    # Run your main function here
+    main(cfg)
