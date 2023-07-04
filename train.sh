@@ -31,8 +31,8 @@ module list
 nvidia-smi 
  
 source $HOME/.bashrc
-conda activate pytorch2
+conda activate guided_diffusion
  
 cd $HOME/rds_work/projects/scoreVAE/guided-diffusion
 
-python -m scripts.scoreVAE_pl_train --config_name cifar10_train_low_beta
+python -m scripts.scoreVAE_pl_train --config_path ./configs --config_name cifar10_train_high_beta

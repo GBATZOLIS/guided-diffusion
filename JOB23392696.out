@@ -1,0 +1,72 @@
+Loading rhel8/default-amp
+  Loading requirement: dot rhel8/slurm singularity/current rhel8/global
+    cuda/11.4 libpciaccess/0.16/gcc-9.4.0-6fonbj6
+    libiconv/1.16/gcc-9.4.0-ahebbov libxml2/2.9.12/gcc-9.4.0-gnknt5e
+    ncurses/6.2/gcc-9.4.0-aiirok7 hwloc/2.5.0/gcc-9.4.0-7sqomga
+    libevent/2.1.12/gcc-9.4.0-hgny7cm numactl/2.0.14/gcc-9.4.0-52dwc6n
+    cuda/11.4.0/gcc-9.4.0-3hnxhjt gdrcopy/2.2/gcc-9.4.0-e4igtfp
+    knem/1.1.4/gcc-9.4.0-bpbxgva libnl/3.3.0/gcc-9.4.0-whwhrwb
+    rdma-core/34.0/gcc-9.4.0-5eo5n2u ucx/1.11.1/gcc-9.4.0-lktqyl4
+    openmpi/4.1.1/gcc-9.4.0-epagguv
+ERROR: Unable to locate a modulefile for 'cuda/11.7'
+Currently Loaded Modulefiles:
+ 1) dot                                       20) rhel8/default-amp  
+ 2) rhel8/slurm                               
+ 3) singularity/current                       
+ 4) rhel8/global                              
+ 5) cuda/11.4                                 
+ 6) libpciaccess/0.16/gcc-9.4.0-6fonbj6       
+ 7) libiconv/1.16/gcc-9.4.0-ahebbov           
+ 8) libxml2/2.9.12/gcc-9.4.0-gnknt5e          
+ 9) ncurses/6.2/gcc-9.4.0-aiirok7             
+10) hwloc/2.5.0/gcc-9.4.0-7sqomga             
+11) libevent/2.1.12/gcc-9.4.0-hgny7cm         
+12) numactl/2.0.14/gcc-9.4.0-52dwc6n          
+13) cuda/11.4.0/gcc-9.4.0-3hnxhjt             
+14) gdrcopy/2.2/gcc-9.4.0-e4igtfp             
+15) knem/1.1.4/gcc-9.4.0-bpbxgva              
+16) libnl/3.3.0/gcc-9.4.0-whwhrwb             
+17) rdma-core/34.0/gcc-9.4.0-5eo5n2u          
+18) ucx/1.11.1/gcc-9.4.0-lktqyl4              
+19) openmpi/4.1.1/gcc-9.4.0-epagguv(default)  
+Tue Jul  4 22:04:43 2023       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 525.105.17   Driver Version: 525.105.17   CUDA Version: 12.0     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA A100-SXM...  On   | 00000000:41:00.0 Off |                    0 |
+| N/A   35C    P0    76W / 500W |      0MiB / 81920MiB |      0%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+Traceback (most recent call last):
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/runpy.py", line 194, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/rds/project/rds-LlrDsbHU5UM/gb511/projects/scoreVAE/guided-diffusion/scripts/scoreVAE_pl_train.py", line 181, in <module>
+    cfg = compose(config_name=args.config_name, overrides=[f"args.home={home_path}"])
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/site-packages/hydra/compose.py", line 38, in compose
+    cfg = gh.hydra.compose_config(
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/site-packages/hydra/_internal/hydra.py", line 594, in compose_config
+    cfg = self.config_loader.load_configuration(
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/site-packages/hydra/_internal/config_loader_impl.py", line 142, in load_configuration
+    return self._load_configuration_impl(
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/site-packages/hydra/_internal/config_loader_impl.py", line 243, in _load_configuration_impl
+    self.ensure_main_config_source_available()
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/site-packages/hydra/_internal/config_loader_impl.py", line 129, in ensure_main_config_source_available
+    self._missing_config_error(
+  File "/rds/user/js2164/hpc-work/conda_envs/guided_diffusion/lib/python3.8/site-packages/hydra/_internal/config_loader_impl.py", line 102, in _missing_config_error
+    raise MissingConfigException(
+hydra.errors.MissingConfigException: Primary config directory not found.
+Check that the config directory '/rds/project/rds-LlrDsbHU5UM/gb511/projects/scoreVAE/guided-diffusion/scripts/configs' exists and readable
